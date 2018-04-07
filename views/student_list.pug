@@ -1,0 +1,45 @@
+extends layout
+
+block head
+  if !pageturn
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+    script(defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js")
+    script(src='/javascripts/studentlistadmin.js')
+block content
+  if !pageturn
+    a#editing-mode-link(href='javascript:void(0)') Режим удаления
+    h1 Студенты
+    if grouplist
+      select#select-group
+        option(value=0)
+          | Любая группа
+        each group in grouplist
+          option(value=group)
+            |  !{group}
+    input#searchname(type='text' autocomplete='off' name='studentname' placeholder='Поиск по имени')
+    p
+      a(href='/student/newstudent/create') Создать нового студента ->
+  div.student-list(data-pages=pagestotal data-page=page)
+    ul
+      each student in student_list
+        li
+          div.student-entry
+            a(href=student.url) 
+              i.far.fa-user(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+              | #{student.fullName}
+            span.student-list-group
+              |  !{student.group.name}
+            a.student-delete-link(href='javascript:void(0)' data-url='/student/delete/'+student._id)
+              i.fas.fa-trash-alt(style="font-size: 20px; color: red; margin-left: 5px;")
+  if !pageturn
+    div(class="pure-button-group" role="group" aria-label="..." data-pages=pagestotal data-page=page)
+        button#page-first(class="pure-button pure-button-disabled") Первая
+        button#page-prev(class="pure-button pure-button-disabled") Предыдущая
+        if pagestotal > 1
+          button#page-next(class="pure-button").next Следующая
+        else
+          button#page-next(class="pure-button pure-button-disabled").next Следующая
+    div(style='')
+      span(style='border: 1px solid #eee; padding: 5px; border-top: none; padding-top: 0px;') 
+        span#current-page 1
+        span#pagestotal /#{pagestotal}

@@ -1,0 +1,45 @@
+extends layout
+
+block head
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  script(src='/javascripts/snek.js')
+
+block content
+  h1 #{header}
+  a(href='/types')
+    | <- Назад к списку
+  form.pure-form(method='POST' action='' data-request_url=request_url)
+    span.success()
+    div.fields-container
+      label(for='name') Название: 
+      input#name(type='text', autocomplete='off' placeholder='Введите название' name='name' tabindex='1' value=(undefined===type ? '' : type.name))
+      span.error()
+      p Поля
+      div.field-container
+        input.input(autocomplete='off' type='text' tabindex='2' placeholder='Название поля' name='fields' value=(undefined===type ? '' : type.fields[0]))
+        if type
+          if type.fields.length > 1
+            button.remove-me(type='button' tabindex='3') -
+          else 
+            button.add-more(type='button' tabindex='3') +
+        else
+          button.add-more(type='button' tabindex='3') +
+        span.error()
+      if type
+        each field, index in type.fields
+          - var last = type.fields.length - 1
+          if index != 0
+            div.field-container
+              input.input(autocomplete='off' type='text' tabindex='2' placeholder='Название поля' name='fields' value=(undefined===type ? '' : type.fields[index]))
+              if index != last
+                button.remove-me(type='button' tabindex='3') -
+              else
+                button.add-more(type='button' tabindex='3') +
+                button.remove-me-last(type='button' tabindex='3') -
+              span.error()
+    button.pure-button.pure-button-primary#form_submit(type='submit' tabindex='4') Подтвердить
+
+  if errors 
+    ul
+      for error in errors
+        li!= error.msg

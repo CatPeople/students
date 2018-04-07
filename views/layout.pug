@@ -1,0 +1,30 @@
+if !pageturn  
+  doctype html
+  html
+    head
+      title= title
+      link(rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous")
+      link(rel='stylesheet', href='/stylesheets/style.css')
+      meta(name="theme-color" content="#0069ca")
+        
+      block head
+    body
+      ul#navigation
+        if userid
+          if userid == '5aaad9cef86881299850be7b'
+            li
+              a(href='/adminpanel') Информация
+            li
+              a(href='/student') Студенты
+            li
+              a(href='/types') Типы документов
+            li
+              a(href='/auth/requests') Заявки на регистрацию
+          else 
+            li
+              a(href='/search/') Поиск
+        li
+          a(href='/auth/') Аккаунт
+      block content
+else 
+  block content

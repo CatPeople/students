@@ -1,0 +1,21 @@
+extends layout
+
+block head
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  script(src="/javascripts/searchlist.js")
+  script(defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js")
+block content
+  h1 Поиск
+  form(method='POST' action='')
+    input(type='hidden' name='fullname' value=student_list[0].fullName)
+    input#groupinput(type='hidden' name='group' value=null)
+  div.student-list(data-pages=pagestotal data-page=page)
+    ul
+      each student in student_list
+        li
+          div.student-entry
+            a.searchlist-link(href='javascript:void(0)' data-group=student.group.name) 
+              i.far.fa-user(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+              | #{student.fullName}
+            span.student-list-group
+              |  !{student.group.name}

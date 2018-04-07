@@ -1,0 +1,28 @@
+extends layout
+
+block head
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  script(src='/javascripts/typeslist.js')
+  script(defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js")
+  meta(charset="utf-8")
+
+block content
+  h1 Список типов документов
+  a(href="/newtype")
+    | Создать новый тип ->
+  ul.types-list
+    each type in types_list
+      li
+        a.type-details-link(href='javascript:void(0)')
+          i.fas.fa-align-left(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+          |  !{type.name}
+        a(href="/types/edit/"+type._id)
+          i.fas.fa-pencil-alt(style="font-size: 20px; color: green; margin-left: 5px;")
+        a.type-delete-link(href='javascript:void(0)' data-url='/types/delete/'+type._id)
+          i.fas.fa-trash-alt(style="font-size: 20px; color: #a7380a; margin-left: 5px;")
+        div.type-details
+          ul.type-details-list
+            each field in type.fields
+              li
+                | !{field}
+          

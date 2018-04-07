@@ -1,0 +1,34 @@
+extends layout
+
+block head
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  script(src='/javascripts/registration.js')
+
+block content
+  h1 Регистрация
+  if userid
+    p
+      b Вы вошли как #{login}
+  else
+    a(href='/auth/')
+      |  Войти
+    form.pure-form.pure-form-stacked(method='POST' action='' data-request_url=request_url)
+      span.error()
+      div.fields-container
+        div.field
+          label(for='email') E-mail, на который будет выслан пароль
+          input#email(type='email' autocomplete='off' placeholder='Email' name='email')
+          span.error()
+        div.field
+          label(for='stud') Номер студенческого
+          input#stud(type='text' autocomplete='off' placeholder='Номер студенческого' name='stud')
+          span.error()
+        div.field
+          label(for='message') Сообщение (необязательно)
+          input#message(type='text' autocomplete='off' placeholder='Ваше сообщение' name='message')
+          span.error()
+        div.field
+          |  !{captcha}
+          input#r(type='text' autocomplete='off' placeholder='Ответ' name='r')
+          span.error()
+      button.pure-button.pure-button-primary#form_submit(type='submit') Отправить заявку

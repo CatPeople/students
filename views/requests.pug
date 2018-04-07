@@ -1,0 +1,47 @@
+extends layout
+
+block head
+  if !pageturn
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+    script(defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js")
+    script(src='/javascripts/requests.js')
+block content
+  h1 Заявки на регистрацию
+  button.pure-button.pure-button-primary#waiting(type='button') Ожидают (
+    span#waitingcount #{student_list.length}
+    | )
+  button.pure-button#approved(type='button') Одобрены (
+    span#approvedcount #{approved_list.length}
+    | )
+  div.student-list(style='margin-top: 10px;')
+    ul
+      each student in student_list
+        li
+          div.student-entry
+            a.regrequestlink(href='javascript:void(0)') 
+              i.far.fa-user(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+              | #{student.login}
+            div.request-more
+              span Номер студенческого: !{student.stud}
+              br
+              span Сообщение: #{student.message}
+              br
+              button.pure-button.pure-button-primary.approve(type='button' data-email=student.login) Одобрить
+              button.pure-button.pure-button-error.decline(type='button' data-email=student.login) Отклонить
+  div.approved-list(style='margin-top: 10px; display: none')
+    ul
+      each student in approved_list
+        li
+          div.student-entry
+            a.regrequestlink(href='javascript:void(0)') 
+              i.far.fa-user(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+              | #{student.login}
+            div.request-more
+              span Номер студенческого: !{student.stud}
+              br
+              span Сообщение: #{student.message}
+              br
+              if student.login != 'admin'
+                button.pure-button.pure-button-error.decline(type='button' data-email=student.login) Отклонить
+              else
+                button.pure-button.pure-button-disabled#decline(type='button') Отклонить

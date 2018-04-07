@@ -1,0 +1,41 @@
+extends layout
+
+block head
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  script(defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js")
+  script(src="/javascripts/student.js")
+  
+block content
+  h1(style='margin-bottom: 10px;' data-firstname=student.name.firstName data-lastname=student.name.lastName data-patronymic=student.name.patronymic data-group=student.group.name data-id=student._id) 
+    span.student-fullname #{student.fullName}
+  div.student-data-container
+    a#save_pdf(href='/student/printable/'+student._id+'.pdf')
+      i.far.fa-file-pdf(style="font-size: 20px; margin-right: 5px;")
+      | Сохранить в PDF
+    div.student-data
+      p Группа: 
+        span.student-data-group !{student.group.name}
+      p Степень: 
+        span.student-data-degree !{student.degree}
+      p Год обучения: 
+        span.student-data-year !{student.year}
+  div.student-documents(data-id=student._id)
+    for document in student.documents
+      div.student-document(data-names=document.names)
+        div.student-document-more-link-container
+          a.student-document-more-link(href='javascript:void(0)')
+            i.far.fa-file-alt(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+            | !{document.type}
+        div.student-document-more-container
+          div.student-document-more
+            for pair in document.content
+              p 
+                b !{pair.field}: 
+                span.document-field-value !{pair.value}
+            if document.files.length != 0
+              b Прикрепленные файлы: 
+              div.attached-files
+                for file in document.files
+                  div.file-link
+                    a(href='/docs-storage/'+document._id+'/'+file target="_blank") #{file}
+          

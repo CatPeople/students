@@ -1,0 +1,9 @@
+extends layout
+
+block content
+  h1 Поиск
+  if nothing
+    span.error Студент не найден
+  form.pure-form(method='POST', action='')
+    input(type='text' autocomplete='off' placeholder='ФИО' name='fullname')
+    button(type="submit" class="pure-button pure-button-primary") Поиск

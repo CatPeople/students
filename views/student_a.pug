@@ -1,0 +1,75 @@
+extends layout
+
+block head
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  script(src='/javascripts/studentadmin.js')
+  script(src='/javascripts/jquery.ui.widget.js')
+  script(src='/javascripts/jquery.iframe-transport.js')
+  script(src='/javascripts/jquery.fileupload.js')
+  script(defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js")
+  
+block content
+  div.editing-mode
+    a#editing-mode-link(href='javscript:void(0)')
+      | Режим редактирования
+  h1(style='margin-bottom: 10px;' data-firstname=student.name.firstName data-lastname=student.name.lastName data-patronymic=student.name.patronymic data-group=student.group.name data-id=student._id) 
+    span.student-fullname #{student.fullName}
+    a#student-name-edit-link(href='javascript:void(0)' data-url='/student/editname/'+student._id)
+      i.fas.fa-pencil-alt(style="font-size: 20px; color: green; margin-left: 5px;")
+    span.glass(style='display: none')
+      i.fas.fa-glass-martini.fa-spin(style="font-size: 20px; color: red; margin-left: 5px;")
+  div.student-data-container
+    a(href='/student/printable/'+student._id+'.pdf')
+      i.far.fa-file-pdf(style="font-size: 20px; margin-right: 5px;")
+      | Сохранить в PDF
+    div.student-data
+      p Группа: 
+        span.student-data-group !{student.group.name}
+      p Степень: 
+        span.student-data-degree !{student.degree}
+      p Год обучения: 
+        span.student-data-year !{student.year}
+  div.student-documents(data-id=student._id)
+    for document in student.documents
+      div.student-document(data-names=document.names)
+        div.student-document-more-link-container
+          a.student-document-more-link(href='javascript:void(0)')
+            i.far.fa-file-alt(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+            span.student-document-more-link-text !{document.type}
+            a.document-edit-link(href='javascript:void(0)' data-url='/student/editdocument/'+document._id)
+              i.fas.fa-pencil-alt(style="font-size: 20px; color: green; margin-left: 5px;")
+            a.document-delete-link(href='javascript:void(0)' data-url='/student/deletedocument/'+document._id)
+              i.fas.fa-trash-alt(style="font-size: 20px; color: red; margin-left: 5px;")
+        div.student-document-more-container
+          div.student-document-more
+            for pair in document.content
+              p 
+                b !{pair.field}: 
+                span.document-field-value !{pair.value}
+            if document.files.length != 0
+              b Прикрепленные файлы: 
+              div.attached-files
+                for file in document.files
+                  div.file-link
+                    a(href='/docs-storage/'+document._id+'/'+file target="_blank") #{file}
+                    a.file-delete-link(href='javascript:void(0)' data-url='/student/deletefile/'+document._id)
+                      i.fas.fa-trash-alt(style="font-size: 20px; color: red; margin-left: 5px;")
+          
+  a.add-document-link(href='javascript:void(0)') + Добавить документ +
+  br
+  div.add-doc-container-container
+    div.add-doc-container
+      form(method='POST' action='' data-request_url=request_url)
+        input(type='hidden' name='studentid' value=student._id)
+        select#select-type(name='type' required)
+          option(value='')
+            | Выберите тип
+          for type in types
+            option(value=type.name data-fields=type.fields)
+              | #{type.name}
+        br
+        span.success()
+        div#document-creation-area
+        div
+          button.pure-button.pure-button-primary#form_submit(type='submit') Подтвердить
+        button#cancel_button(type='button') Отменить

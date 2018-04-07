@@ -1,0 +1,37 @@
+extends layout
+
+block head
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  script(src='/javascripts/newstudent.js')
+
+block content
+  h1 Создать студента
+  form(method='POST' action='' data-request_url=request_url)
+    span.error()
+    div.fields-container
+      div.field
+        label(for='lastname') Фамилия: 
+        br
+        input(type='text', autocomplete='off' placeholder='' name='lastname')
+        span.error()
+      div.field
+        label(for='firstname') Имя: 
+        br
+        input(type='text', autocomplete='off' placeholder='' name='firstname')
+        span.error()
+      div.field
+        label(for='patronymic') Отчество: 
+        br
+        input(type='text', autocomplete='off' placeholder='' name='patronymic')
+        span.error()
+      div.field
+        label(for='group') Группа: 
+        br
+        input(type='text', autocomplete='off' placeholder='' name='group')
+        span.error()
+    button#form_submit(type='submit' tabindex='4') Подтвердить
+
+  if errors 
+    ul
+      for error in errors
+        li!= error.msg

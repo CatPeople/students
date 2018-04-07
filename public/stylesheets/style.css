@@ -1,0 +1,228 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background-color: #fefefe
+}
+
+a {
+  color: #0069ca;
+  text-decoration: none;
+}
+
+form {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.error {
+  color: #FF5A5A;
+  margin-left: 5px;
+}
+
+.success {
+  color: green;
+}
+
+.type-details {
+  display: none;
+}
+
+.types-list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  padding-bottom: 5px;
+}
+
+.type-details {
+  padding: 5px;
+}
+
+.type-details-list {
+  border: 1px dotted #999;
+  padding: 10px;
+  padding-left: 25px;
+  display: inline-block;
+}
+
+ul.types-list li {
+  padding-top: 10px;
+}
+
+.student-list ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  padding-bottom: 5px;
+}
+
+#searchname {
+  margin-left: 5px;
+}
+
+.decline {
+  background: rgb(220, 140, 140);
+  margin-left: 3px;
+}
+
+.request-more {
+  display: none;
+}
+
+.document-creation-field {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.student-form-field {
+  padding-bottom: 5px;
+}
+
+.field-container {
+  padding-bottom: 5px;
+}
+
+.fileupload-status-text {
+  color: blue;
+}
+
+.student-document {
+
+}
+
+.student-document-more {
+  display: inline-block;
+  border: 1px solid #aaa;
+  padding: 10px;
+}
+
+p {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.student-data-group, .student-data-degree, .student-data-year {
+  font-weight: bold;
+}
+
+.student-document-more-link {
+  color: #0069ca;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.add-doc-container {
+  display: none;
+}
+
+.add-document-link {
+  background-color: #f1eeff;
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid #555;
+  font-size: 0.8rem;
+  height: auto;
+  color: #333;
+}
+
+.add-document-link:hover {
+  background-color: #fafcff;
+  cursor: pointer;
+}
+
+.document-creation-files {
+  padding-top: 10px;
+}
+
+.filelabel {
+  background-color: #f1eeff;
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid #555;
+  font-size: 0.8rem;
+  height: auto;
+  color: #333;
+}
+
+.filelabel:hover {
+  background-color: #fafcff;
+  cursor: pointer;
+}
+
+#cancel_button {
+  float: right;
+  display: none;
+}
+
+#student-name-edit-link {
+  display: none;
+}
+
+.document-edit-link {
+  display: none;
+}
+
+.document-delete-link {
+  display: none;
+}
+
+.student-delete-link {
+  display: none;
+}
+
+.student-entry {
+  line-height: 25px;
+}
+
+.file-delete-link {
+  display: none;
+}
+
+.student-document-more-link-container {
+  line-height: 30px;
+}
+
+.file-link {
+  line-height: 25px;
+}
+
+ul#navigation {
+  list-style-type: none;
+  margin: 0;
+  margin-bottom: 20px;
+  padding: 0;
+  overflow: hidden;
+
+
+}
+
+ul#navigation li {
+  float: left;
+  border: 1px solid #ddd;
+  border-left: none;
+  background-color: #f9f9f9;
+}
+ul#navigation li:first-child {
+  border-left: 1px solid #ddd;
+}
+
+
+ul#navigation li a {
+    display: block;
+    color: black;
+    text-align: center;
+    padding: 10px 16px;
+    text-decoration: none;
+}
+
+ul#navigation li a:hover:not(.active) {
+    background-color: #fdfdfd;
+}
+
+.active {
+    background-color: #4CAF50;
+}
+
+.student-list-group {
+  color: #666;
+}

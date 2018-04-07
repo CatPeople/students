@@ -1,0 +1,33 @@
+doctype html
+html
+  head
+    title= title
+    link(rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous")
+    style
+      include ../public/stylesheets/style.css
+    meta(name="theme-color" content="#0069ca")
+    script(defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js")
+  body
+    h1(data-firstname=student.name.firstName data-lastname=student.name.lastName data-patronymic=student.name.patronymic data-group=student.group.name data-id=student._id) 
+      span.student-fullname #{student.fullName}
+    div.student-data-container
+      div.student-data
+        p Группа: 
+          span.student-data-group !{student.group.name}
+        p Степень: 
+          span.student-data-degree !{student.degree}
+        p Год обучения: 
+          span.student-data-year !{student.year}
+    div.student-documents(data-id=student._id)
+      for document in student.documents
+        div.student-document(data-names=document.names)
+          div.student-document-more-link-container
+            span.student-document-more-link
+              i.far.fa-file-alt(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+              | !{document.type}
+          div.student-document-more-container
+            div.student-document-more(style='margin-bottom: 5px;')
+              for pair in document.content
+                p 
+                  b !{pair.field}: 
+                  span.document-field-value !{pair.value}
