@@ -51,10 +51,10 @@ db.on('reconnected', function () {
 db.on('disconnected', function() {
     console.log('disconnected');
     console.log('dbURI is: '+dbURI);
-    mongoose.connect(dbURI, {auto_reconnect:true, keepAlive: 1, connectTimeoutMS: 30000 } );
+    mongoose.connect(dbURI, {auto_reconnect:true, keepAlive: 1, connectTimeoutMS: 30000, reconnectTries: Number.MAX_VALUE } );
   });
 console.log('dbURI is: '+dbURI);
-mongoose.connect(dbURI, {auto_reconnect:true});
+mongoose.connect(dbURI, {auto_reconnect:true, keepAlive: 1, connectTimeoutMS: 30000, reconnectTries: Number.MAX_VALUE } );
 
 // Скрипт, выпускающий студентов 1 августа
 var j = schedule.scheduleJob('42 10 1 8 *', function(){
