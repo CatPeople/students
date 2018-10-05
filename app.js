@@ -1,3 +1,4 @@
+
 // Модули
 var express = require('express');
 var mongoose = require('mongoose');
@@ -16,19 +17,24 @@ var faker = require('faker');
 const fileUpload = require('express-fileupload');
 var async = require("async");
 var schedule = require('node-schedule');
-var index = require('./routes/index');
-var students = require('./routes/students');
-var types = require('./routes/types');
-var auth = require('./routes/auth');
+
 
 var Student = require('./models/student')
 var User = require('./models/user')
-var Document = require('./models/document')
+var documentmodels = require('./models/document')
+
+var conf = require('./config');
+
 
 var app = express();
+app.use((req, res, next) => {
+  res.locals.filesize = require("filesize")
+  next()
+})
 // Подключение к базе
 app.use(fileUpload());
-var dbURI = "mongodb://alexandra:password@ds117158.mlab.com:17158/hogwarts"
+
+var dbURI = "URI"
 
 var db = mongoose.connection;
 db.on('connecting', function() {
@@ -76,7 +82,7 @@ var j = schedule.scheduleJob('42 10 1 8 *', function(){
 // Сессии
 app.use(session({
     store: new MongoStore({ mongooseConnection: mongoose.connection }),
-    secret: "xkMfKzDWJh",
+    secret: conf.sessionSecret,
     saveUninitialized: false,
     resave: true
 }));
@@ -84,6 +90,12 @@ app.use(session({
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
+
+var viewspath = path.join(__dirname, 'views')
+var index = require('./routes/index');
+var students = require('./routes/students')(viewspath);
+var types = require('./routes/types');
+var auth = require('./routes/auth');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -93,15 +105,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
 app.use('/', index);
 app.use('/student', students);
 app.use('/types', types);
 app.use('/auth', auth);
-
-const fs = require('fs');
-
-
-
 
 
 // catch 404 and forward to error handler
@@ -119,6 +127,7 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
+  console.log(err.message)
   res.render('error');
 });
 

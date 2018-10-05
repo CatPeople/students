@@ -3,6 +3,8 @@ var router = express.Router();
 var Type = require('../models/type')
 var Student = require('../models/student')
 var User = require('../models/user')
+var ServerInfo = require('../models/serverinfo')
+var documentmodels = require('../models/document')
 var middlewares = require("./middlewares")
 
 const { check, validationResult } = require('express-validator/check');
@@ -32,6 +34,8 @@ router.get('/search', middlewares.reqcommonlogin, function (req, res) {
   res.render('search', {userid: req.session.userId});
 })
 
+
+
 router.post('/search', middlewares.reqcommonlogin,
 check('fullname').exists(),
 check('fullname', 'Не может быть пустым').isLength({min: 1, max: 100}).trim(),
@@ -46,7 +50,6 @@ function(req, res, next) {
     var patronymic;
     var splitsearch = req.body.fullname.split(' ', 3)  // используем пробел как делимитер
                                                       // получаем 3 части, остальное отбрасываем
-    console.log(splitsearch)
     if (splitsearch) {
       lastName = splitsearch[0];
       if (splitsearch[1])
@@ -61,14 +64,13 @@ function(req, res, next) {
     firstName = '';
   if (!patronymic)
     patronymic = '';
-  console.log('Lastname: '+lastName);
-  console.log('Firstname: '+firstName);
-  console.log('patronymuc: '+patronymic);
   if (!req.body.group) // если не была запрошена группа в дополнение к имени
   {
     // ищем студента где все 3 имени совпадают с полученным из запроса
     Student.find({$and:[{'name.firstName': firstName}, {'name.lastName': lastName}, {'name.patronymic': patronymic}]})
-    .populate('documents') // заполняем ссылки на документы объектами документов
+    .populate({path: 'documents', populate: {path: 'scope'}}) // заполняем ссылки на документы объектами документов
+    .populate({path: 'documents', populate: {path: 'files'}})
+    .populate({path: 'ratings', populate: {path: 'scope'}})
     .exec(function(err, students) {
       if (err) {
         res.render('search', {userid: req.session.userId});
@@ -87,7 +89,9 @@ function(req, res, next) {
   }
   else { // от клиента получены имя и группа, ищем, дальше то же самое
     Student.find({$and:[{'name.firstName': firstName}, {'name.lastName': lastName}, {'name.patronymic': patronymic}], 'group.name': req.body.group})
-    .populate('documents')
+    .populate({path: 'documents', populate: {path: 'scope'}}) // заполняем ссылки на документы объектами документов
+    .populate({path: 'documents', populate: {path: 'files'}})
+    .populate({path: 'ratings', populate: {path: 'scope'}})
     .exec(function(err, students) {
       if (err) {
         res.render('search', {userid: req.session.userId});
@@ -103,8 +107,10 @@ function(req, res, next) {
   }
 })
 
+
+
 router.get('/adminpanel', middlewares.reqlogin, function(req, res, next) {
-    Student.find({}, function(err, students) {
+    Student.countDocuments({}, function(err, students) {
       if (err) {
         res.redirect('/auth')
         return console.log(err);
@@ -114,7 +120,29 @@ router.get('/adminpanel', middlewares.reqlogin, function(req, res, next) {
           res.redirect('/auth')
           return console.log(err);
         }
-        res.render('adminpanel', {userid: req.session.userId, studentscount: students.length, userswaiting: userswaiting.length});
+        documentmodels.Document.countDocuments().exec(function(err, documentscount) {
+          if (err) {
+            res.redirect('/auth')
+            return console.log(err);
+          }
+          var needpwchange = false;
+          User.findOne({login: 'admin'}, function(err, adm) {
+            if (adm.password == 'admin') {
+              needpwchange = true;
+            }
+            ServerInfo.findOne({'name': 'driveUsageEstimate'}, function(err, entry) {
+              if (err) {
+                return res.render('adminpanel', {userid: req.session.userId, studentscount: students, userswaiting: userswaiting.length, documentscount: documentscount, needpwchange: needpwchange, driveusage: 0});
+              }
+              if(entry)
+                res.render('adminpanel', {userid: req.session.userId, studentscount: students, userswaiting: userswaiting.length, documentscount: documentscount, needpwchange: needpwchange, driveusage: entry.valueNumber});
+              else
+                return res.render('adminpanel', {userid: req.session.userId, studentscount: students, userswaiting: userswaiting.length, documentscount: documentscount, needpwchange: needpwchange, driveusage: 0});
+            })
+
+          })
+
+        })
       })
     })
 

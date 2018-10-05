@@ -1,6 +1,8 @@
 $(document).ready(function(){
 
   var editingmode = false;
+  var ratingscopes = []
+  $('.checkbox-rating').each(function(element){$(this).prop('checked', false)})
   $('#editing-mode-link').click(function() {
     if (editingmode == false) {editingmode = true}
     else {editingmode = false}
@@ -39,12 +41,20 @@ $(document).ready(function(){
       $('#page-prev').removeClass('pure-button-disabled') //включаем
     }
   }
+
+  var currentrequest = null;
   countpages(); // вызываем функцию, которую только что написали
   var refreshlist = function() { // функция для запроса нового списка с сервера и обновления его на странице
-    $.ajax({
+    $('.student-list-spinner').show()
+    currentrequest = $.ajax({
       url: '/student/page/ajax/'+currentpage, // запрос к серверу
       type:'GET',
       data: groupsearch, // было объявлено в начале, может быть и пустым
+      beforeSend : function()    {
+        if(currentrequest != null) {
+            currentrequest.abort();
+        }
+      },
     }).done(response => {
       $('.student-list').html($(response).html()); // обновляем список
       $('.student-list').css('opacity', '0'); // анимация
@@ -62,6 +72,10 @@ $(document).ready(function(){
       history.replaceState('page', "page", "/student/page/"+currentpage); //меняем адресную строку браузера
                                                                           // для удобства перехода "назад" со страницы студента
                                                                           // обратно в список
+    })
+    .fail(function(response) {
+      if (response.statusText != 'abort')
+        $('.student-list-spinner').hide()
     })
   }
 
@@ -123,9 +137,30 @@ $(document).ready(function(){
     refreshlist();
   })
 
+  $('.checkbox-rating').change(function() {
+    if (this.checked) {
+      ratingscopes.push(this.id)
+    }
+    else {
+      ratingscopes.splice(ratingscopes.indexOf(this.id), 1)
+    }
+    groupsearch.ratingscopes = ratingscopes
+    if(ratingscopes.length != 0) {
+      $('#searchname').val('')
+      $('#searchname').prop('disabled', true)
+      groupsearch.studentname = null;
+    }
+    else {
+
+      $('#searchname').prop('disabled', false)
+    }
+    refreshlist();
+  })
+
   $(function() {
       $('body').on('click', '.student-delete-link', function(e) {
           if (window.confirm("Вы уверены?")) {
+            $(this).find('svg').replaceWith("<i class='fas fa-spinner fa-spin' style='font-size: 20px; color: red; margin-left: 5px;'></i>")
               $.ajax({
                 url: $(this).data('url'),
                 type:'DELETE',

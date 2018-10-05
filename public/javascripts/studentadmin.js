@@ -1,19 +1,21 @@
 $(document).ready(function(){
 
+
   $('body').on('click', '.student-document-more-link', function() {
-    $(this).parent().parent().find('.student-document-more').fadeToggle()
+    $(this).parent().parent().next().fadeToggle()
   })
   var editingmode = false;
+  var ratingsvisual = $('.student-ratings')
 
   $('.student-document-more').each(function(element){$(this).hide()}) // скрываем все подробности документов
   const $form = $('form') // для создания и редактирования документа используется одна и та же форма
   $('.add-document-link').click(function() { // клик по кнопке добавить документ
+    $('.add-doc-container').appendTo('.add-doc-container-container')
     $('#cancel_button').hide(); // прячем кнопку "отмена" (она доступна только у редактирования)
     if (divBeingEdited) { // если в данный момент происходит редактирование
       divBeingEdited = null // очищаем переменную
       var zeroOption = $form.find('option').eq(0) // нулевой элемент в выпадающем списке (где выбирается тип)
       $('.add-doc-container').hide() // прячем контейнер с формой
-      $('.add-doc-container').appendTo('.add-doc-container-container') // переносим форму вниз
       $('.add-doc-container').css('display', 'block')
       zeroOption.html('Выберите тип') // делаем нулевой элемент как он был по умолчанию
       zeroOption.val(null)
@@ -44,6 +46,7 @@ $(document).ready(function(){
       $('body').on('click', '.document-delete-link', function() {
           if (window.confirm("Вы уверены?")) {
               $('#cancel_button').trigger('click');
+              $(this).find('svg').replaceWith("<i class='fas fa-spinner fa-spin' style='font-size: 20px; color: red; margin-left: 5px;'></i>")
               $.ajax({
                 url: $(this).data('url'), // адрес запроса
                 type:'DELETE',
@@ -51,7 +54,8 @@ $(document).ready(function(){
                                               // потому что айди документа уже есть в адресе запроса
               }).done(response => {
                 if(response['status'] == 'success') {
-                  $(this).parent().parent().fadeOut(400, function() {$(this).remove()})
+                  $(this).parent().parent().parent().fadeOut(400, function() {$(this).remove()})
+                  ratingsvisual.html(response.ratingsvisual)
                 }
                 else {
                   alert(response['error'])
@@ -65,10 +69,11 @@ $(document).ready(function(){
           if (window.confirm("Вы уверены?")) {
 
               var filename = $(this).parent().find('a').html()
+              $(this).find('svg').replaceWith("<i class='fas fa-spinner fa-spin' style='font-size: 20px; color: red; margin-left: 5px;'></i>")
               $.ajax({
                 url: $(this).data('url'),
                 type:'DELETE',
-                data: {filename: filename}
+                data: {fileid: $(this).data('fileid')}
               }).done(response => {
                 if(response['status'] == 'success') {
                   $(this).parent().fadeOut(400, function() {$(this).remove()})
@@ -80,26 +85,31 @@ $(document).ready(function(){
           }
       });
       $('body').on('click', '.document-edit-link', function() { // клик по редактированию документа
-        divBeingEdited = $(this).parent().parent() // сохраняем ссылку на див с данными в переменную
+        divBeingEdited = $(this).parent().parent().parent() // сохраняем ссылку на див с данными в переменную
         var zeroOption = $form.find('option').eq(0) // нулевая опция в списке
         var originalTypeName = divBeingEdited.find('.student-document-more-link-text').html() // сохраняем оригинал имени типа
-        $(this).parent().find('.student-document-more').show(); // показываем подробности документа, если скрыты
+        $(this).parent().parent().next().show(); // показываем подробности документа, если скрыты
         $('.add-doc-container').show() // показываем форму, если скрыта
-        $('.add-doc-container').prependTo(divBeingEdited.find('.student-document-more-container')) // переносим форму
+        $('.add-doc-container').appendTo(divBeingEdited.find('.form-slot')) // переносим форму
+        /*
         $('.add-doc-container').css('display', 'inline-block') // меняем ксс чтобы они стояли рядом друг с другом
         $('.add-doc-container').css('padding-right', '20px')
         divBeingEdited.find('.student-document-more').css('display', 'inline-block')
         divBeingEdited.find('.student-document-more').css('vertical-align', 'top')
+        */
         zeroOption.html(originalTypeName+' (original)') // меняем имя нулевой опции в выпадающем списке
         zeroOption.val(originalTypeName) // меняем значение нулевой опции, которое будет отправлено серверу в качестве типа документа (без слова original)
-        zeroOption.data('fields', JSON.parse(divBeingEdited.attr('data-names'))) // сохраняем в data-fields нулевой опции имена полей
+        zeroOption.data('fields', JSON.parse(divBeingEdited.find('.student-document').attr('data-names'))) // сохраняем в data-fields нулевой опции имена полей
                                                                                 // которые у каждого дива документа изначально записаны в data-names в формате ['вот', 'таком'] как строка
                                                                                 // функция JSON.parse делает из строки настоящий массив
                                                                                 // все это делается для того, чтобы при нажатии на другие типы
                                                                                 // а потом снова на оригинальный тип, вернулись оригинальные поля
         $form.data('request_url', $(this).data('url'))
+        $form.children('select').prop('selectedIndex',1);
         $form.children('select').prop('selectedIndex',0); // устанавливаем выбранную опцию на нулевую
         $form.children('select').trigger('change') // триггерим обработчик смены опции, который создает поля
+        $form.find('#select-scope').val(divBeingEdited.find('.scope-display-value').html())
+        $form.find('#rating').val(parseInt(divBeingEdited.find('.rating-display').html()))
         $('.document-creation-field-input').each(function(index) {
           // заполняем оригинальные значения полей, для удобства
           $(this).val(divBeingEdited.find('.student-document-more').find('.document-field-value').eq(index).html())
@@ -137,6 +147,7 @@ $(document).ready(function(){
         var studentData = 0; // не знаю зачем это
         $('#student-form-cancel').prop('disabled', true); // отключаем кнопки
         $('#submit-student-form').prop('disabled', true);
+        $('.submitspinner').show()
         $('#student-form').children('.error').html('') // очищаем ошибку, если была
         $.ajax({
           url: '/student/editstudent/'+$('h1').data('id'), // адрес запроса
@@ -146,6 +157,7 @@ $(document).ready(function(){
         }).done(response => { // запрос прошел
           $('#student-form-cancel').prop('disabled', false); // включаем кнопки
           $('#submit-student-form').prop('disabled', false);
+          $('.submitspinner').hide()
           if (response.errors.length != 0) { // ошибки
             for (var i = 0; i < response['errors'].length; i++) {
               if (response['errors'][i]['param'] == 'general') {
@@ -194,7 +206,7 @@ $(document).ready(function(){
   var pendingList = [];
   var filesInProgress = 0;
   var nextid = 0;
-  var newvisualfiles = $("<div class='attached-files'></div>")
+  var newvisualfiles;
   var sendAll = function (id, onlast) { // функция, при вызове которой начинают загружаться файлы
     // id - документ, к которому будут присоединены файлы, onlast - функция, которая будет вызвана, когда последний файл
       // был загружен
@@ -249,10 +261,7 @@ $(document).ready(function(){
             icon.removeClass('fa-spin');
             filesInProgress--;
             // добавляем ссылку на файл в контейнер с ссылками
-            newvisualfiles.append("<div class='file-link'><a href='/docs-storage/"+data.result.docid+"/"+data.result.filename+"' target='_blank'>"+data.result.filename+"</a>"+
-            "<a class='file-delete-link' href='javascript:void(0)' "+
-            "data-url='/student/deletefile/"+data.result.docid+"'>"+
-            "<i class='fas fa-trash-alt' style='font-size: 20px; color: red; margin-left: 5px;'></i></a></div>")
+            newvisualfiles.append(data.result.visual)
 
             if (filesInProgress == 0) { // если больше файлов нет
               data.onlast(); // вызываем функцию, которая присвоена, когда загружен последний файл
@@ -270,9 +279,17 @@ $(document).ready(function(){
         }
         });
 });
+    $('#scope-and-rating').show()
     }
+    else {$('#scope-and-rating').hide()}
+    $('#select-scope').val('')
+    $('#rating').val('')
   })
 
+  if ($('#select-type').val() !="") {
+    $('.add-doc-container').show();
+    $('#select-type').trigger('change')
+  }
 
 
   $form.on('submit', submitHandler)
@@ -280,10 +297,21 @@ $(document).ready(function(){
   function submitHandler (e) { // большоооой обработчик формы создания/редактирования документа
     e.preventDefault()
     $(this).find('#form_submit').prop('disabled', true); // отключаем кнопку
+    $('.submitspinner').show()
     var typename = $(this).children('select').val(); // берем имя типа из выбранного типа в выпадающем списке
     $(this).children('select').prop('disabled', true); // отключаем выпадающий список
     $('#fileupload').prop('disabled', true); // отключаем загрузку файлов
-    var fieldsData = {typename: typename, names: [], fields: []}; // создаем объект с данными полей и названием типа
+    var filesStatus;
+    if (pendingList.length > 0) {
+      if (divBeingEdited) {
+        if (divBeingEdited.find('.file-link').length == 0)
+        filesStatus = 'placeholder';
+      }
+      else {
+        filesStatus = 'placeholder';
+      }
+    }
+    var fieldsData = {studentid: studentid, typename: typename, names: [], filesStatus: filesStatus, fields: [], scope: $('#select-scope').val(), rating: $('#rating').val()}; // создаем объект с данными полей и названием типа
     $('.document-creation-field-name').each(function(){fieldsData.names.push($(this).html())}) // запихиваем туда имена
     $('.document-creation-field-input').each(function(){fieldsData.fields.push($(this).val())}) // запихиваем туда значения
     $('.error').each(function(){
@@ -299,70 +327,44 @@ $(document).ready(function(){
       traditional: true,
       data: fieldsData
     }).done(response => {
+      var newvisual = $(response.visual)
+      newvisualfiles = $(newvisual).find(".attached-files")
       var afterItsAllOver = function () { // создаем функцию, которая будет вызвана после создания документа
-        // создаем новый блок с документом, пока пустой
-        var newvisual = $("<div class='student-document' data-names='"+JSON.stringify(fieldsData.names)+"'><div class='student-document-more-link-container'><a class='student-document-more-link' "+
-        "href='javascript:void(0)'><i class='far fa-file-alt' style='font-size: 20px; color: #0069ca; margin-right: 5px;'></i><span class='student-document-more-link-text'>"+fieldsData.typename+"</span></a>"+
-        "<a class='document-edit-link' href='javascript:void(0)' "+
-        "data-url='/student/editdocument/"+response.id+"'>"+
-        "<i class='fas fa-pencil-alt' style='font-size: 20px; color: green; margin-left: 5px;'></i></a>"+
-        "<a class='document-delete-link' href='javascript:void(0)' "+
-        "data-url='/student/deletedocument/"+response.id+"'>"+
-        "<i class='fas fa-trash-alt' style='font-size: 20px; color: red; margin-left: 5px;'></i></a></div><div class='student-document-more-container'><div class='student-document-more' style='display: block;'>"+
-        "</div></div></div>").appendTo('.student-documents')
+        // создаем новый блок с документом
+        newvisual.appendTo('table')
+        ratingsvisual.html(response.ratingsvisual)
         if (editingmode) { // если режим редактирования, то показываем всякие карандаши-урны
           newvisual.find('.document-edit-link').show()
           newvisual.find('.document-delete-link').show()
         }
-        for (var j = 0; j < fieldsData.names.length; j++) {
-          // прибавляем в блок с документом пары имя-значение
-          newvisual.find('.student-document-more').append("<p><b>"+fieldsData.names[j]+": </b><span class='document-field-value'>"+fieldsData.fields[j]+"</span></p>");
-        }
-        if (newvisualfiles.html() != '') { // если блок с файлами не пустой, то прибавляем и его
-        newvisual.find('.student-document-more').append("<b>Прикрепленные файлы: </b>")
-        newvisual.find('.student-document-more').append(newvisualfiles)
-        }
         if (editingmode) {
           newvisual.find('.file-delete-link').each(function(element) {$(this).show()})
         }
-        newvisualfiles = $("<div class='attached-files'></div>") // делаем блок с файлами пустым
+
         $form.children('select').prop('selectedIndex',0); // сбрасываем форму
         $form.children('select').trigger('change')
         $form.children('.success').html('')
-        $('.add-doc-container').fadeToggle()
+        $('.add-doc-container').hide()
 
       }
       var afterEditingIsOver = function () { // создаем функцию, которая будет вызвана после редактирования документа
-        divBeingEdited.attr('data-names', JSON.stringify(fieldsData.names)) // обновляем data-names имена полей (чтобы использовать, если снова редактировать этот же документ)
-        divBeingEdited.find('.student-document-more-link-text').html(fieldsData.typename) // обновляем ссылку имя типа документа
-        var documentmorediv = divBeingEdited.find('.student-document-more')
-        documentmorediv.show();
-        var oldfiles = null;
-        if (documentmorediv.find('.attached-files').length != 0) { // если в документе до редактирования были прикреплены файлы
-          oldfiles = documentmorediv.find('.attached-files').html(); // сохраняем блок с ними в переменную oldfiles
-        }
-        documentmorediv.html(''); // очищаем содержимое документа
-        for (var j = 0; j < fieldsData.names.length; j++) {
-          // заполняем новыми данными
-          documentmorediv.append("<p><b>"+fieldsData.names[j]+": </b><span class='document-field-value'>"+fieldsData.fields[j]+"</span></p>");
-        }
-        if (oldfiles || newvisualfiles.html() != '') { // если были старые файлы или добавились новые файлы
-          // то все добавляем
-        documentmorediv.append("<b>Прикрепленные файлы: </b>")
-        newvisualfiles.prepend(oldfiles)
-        documentmorediv.append(newvisualfiles)
-        }
+      $('.add-doc-container').appendTo('.add-doc-container-container') // переносим форму вниз
+      divBeingEdited.replaceWith(newvisual)
+      ratingsvisual.html(response.ratingsvisual)
         if (editingmode) {
-          documentmorediv.find('.file-delete-link').each(function(element) {$(this).show()})
+          newvisual.find('.document-edit-link').show()
+          newvisual.find('.document-delete-link').show()
+          newvisual.find('.file-delete-link').each(function(element) {$(this).show()})
         }
-        newvisualfiles = $("<div class='attached-files'></div>") // делаем временный блок с файлами пустым
+
         $('#cancel_button').trigger('click')
         $form.children('.success').html('')
-        $('.add-doc-container').fadeToggle()
+        $('.add-doc-container').hide()
       }
       if(response['errors'].length != 0) { // ошибки
         $form.find('#form_submit').prop('disabled', false); // включаем кнопки
         $form.children('select').prop('disabled', false);
+        $('.submitspinner').hide()
         $('#fileupload').prop('disabled', false);
         for (var i = 0; i < response['errors'].length; i++) { // пишем ошибки в нужных местах
           if (response['errors'][i]['param'] == 'general') {
@@ -392,6 +394,7 @@ $(document).ready(function(){
               $form.find('#form_submit').prop('disabled', false);
               $form.children('select').prop('disabled', false);
               $('#fileupload').prop('disabled', false);
+              $('.submitspinner').hide()
             });
           }
           else { // не редактируем, а создаем
@@ -401,6 +404,7 @@ $(document).ready(function(){
               $form.find('#form_submit').prop('disabled', false);
               $form.children('select').prop('disabled', false);
               $('#fileupload').prop('disabled', false);
+              $('.submitspinner').hide()
             });
           }
         }
@@ -411,6 +415,7 @@ $(document).ready(function(){
           $form.find('#form_submit').prop('disabled', false);
           $form.children('select').prop('disabled', false);
           $('#fileupload').prop('disabled', false);
+          $('.submitspinner').hide()
         }
       }
     })
@@ -418,6 +423,7 @@ $(document).ready(function(){
       $form.find('#form_submit').prop('disabled', false);
       $form.children('select').prop('disabled', false);
       $('#fileupload').prop('disabled', false);
+      $('.submitspinner').hide()
     })
   }
 

@@ -29,31 +29,12 @@ block content
         span.student-data-degree !{student.degree}
       p Год обучения: 
         span.student-data-year !{student.year}
+  div.student-ratings
+    include includes/ratings-display.pug
   div.student-documents(data-id=student._id)
-    for document in student.documents
-      div.student-document(data-names=document.names)
-        div.student-document-more-link-container
-          a.student-document-more-link(href='javascript:void(0)')
-            i.far.fa-file-alt(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
-            span.student-document-more-link-text !{document.type}
-            a.document-edit-link(href='javascript:void(0)' data-url='/student/editdocument/'+document._id)
-              i.fas.fa-pencil-alt(style="font-size: 20px; color: green; margin-left: 5px;")
-            a.document-delete-link(href='javascript:void(0)' data-url='/student/deletedocument/'+document._id)
-              i.fas.fa-trash-alt(style="font-size: 20px; color: red; margin-left: 5px;")
-        div.student-document-more-container
-          div.student-document-more
-            for pair in document.content
-              p 
-                b !{pair.field}: 
-                span.document-field-value !{pair.value}
-            if document.files.length != 0
-              b Прикрепленные файлы: 
-              div.attached-files
-                for file in document.files
-                  div.file-link
-                    a(href='/docs-storage/'+document._id+'/'+file target="_blank") #{file}
-                    a.file-delete-link(href='javascript:void(0)' data-url='/student/deletefile/'+document._id)
-                      i.fas.fa-trash-alt(style="font-size: 20px; color: red; margin-left: 5px;")
+    table.pure-table.pure-table-bordered
+      for document in student.documents
+        include includes/document.pug
           
   a.add-document-link(href='javascript:void(0)') + Добавить документ +
   br
@@ -70,6 +51,15 @@ block content
         br
         span.success()
         div#document-creation-area
+        div#scope-and-rating
+          select#select-scope(name='scope' required)
+            option(value='')
+              | Сфера деятельности
+            for scope in scopes
+              option(value=scope.name)
+                | #{scope.name}
+          input#rating(type='number' min='0' name='rating' value='' required placeholder='Баллы')
         div
           button.pure-button.pure-button-primary#form_submit(type='submit') Подтвердить
-        button#cancel_button(type='button') Отменить
+          i.submitspinner.fas.fa-spinner.fa-spin(style="font-size: 20px; margin-left: 5px; color: black; vertical-align: middle; display: none")
+        button.pure-button#cancel_button(type='button') Отменить

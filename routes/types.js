@@ -8,7 +8,6 @@ const { check, validationResult } = require('express-validator/check');
 const { matchedData, sanitize } = require('express-validator/filter');
 
 
-
 // список типов
 router.get('/', middlewares.reqlogin, function(req, res, next) {
   Type.find()
