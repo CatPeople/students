@@ -1,0 +1,4 @@
+div.file-link
+  a(href=file.url target="_blank") #{file.name} (#{filesize(file.size)})
+  a.file-delete-link(href='javascript:void(0)' data-url='/student/deletefile/'+document._id data-fileid=file._id)
+    i.fas.fa-trash-alt(style="font-size: 20px; color: red; margin-left: 5px;")

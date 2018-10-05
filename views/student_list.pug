@@ -8,7 +8,7 @@ block head
 block content
   if !pageturn
     a#editing-mode-link(href='javascript:void(0)') Режим удаления
-    h1 Студенты
+    h1.student-list-heading Студенты
     if grouplist
       select#select-group
         option(value=0)
@@ -17,20 +17,42 @@ block content
           option(value=group)
             |  !{group}
     input#searchname(type='text' autocomplete='off' name='studentname' placeholder='Поиск по имени')
+    div.list-ratings-checkboxes
+      b Рейтинг
+      for scope in scopes
+        div.checkbox-in-list
+          input.checkbox-rating(id=scope._id type='checkbox' name=scope._id)
+          label(for=scope._id)  #{scope.name}
     p
       a(href='/student/newstudent/create') Создать нового студента ->
   div.student-list(data-pages=pagestotal data-page=page)
-    ul
-      each student in student_list
-        li
-          div.student-entry
-            a(href=student.url) 
-              i.far.fa-user(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
-              | #{student.fullName}
-            span.student-list-group
-              |  !{student.group.name}
-            a.student-delete-link(href='javascript:void(0)' data-url='/student/delete/'+student._id)
-              i.fas.fa-trash-alt(style="font-size: 20px; color: red; margin-left: 5px;")
+    table.pure-table.pure-table-bordered.pure-table-striped
+      thead
+        td.theader
+          b Имя
+          i.fas.fa-spinner.fa-spin.student-list-spinner(style="font-size: 18px; color: #0069ca;")
+        td.theader 
+          b Группа
+        if ratingon
+          td.theader
+            b Рейтинг 
+        tbody
+          each student in student_list
+            tr.student-entry
+              td
+                a.student-delete-link(href='javascript:void(0)' data-url='/student/delete/'+student._id)
+                  i.fas.fa-trash-alt(style="font-size: 20px; color: red; margin-left: 5px;")
+                a(href=student.url) 
+                  i.far.fa-user(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+                  | #{student.fullName}
+              td
+                span.student-list-group
+                  |  !{student.group.name}
+              if student.ratings
+                if student.ratings[0]
+                  if student.ratings[0].actualrating
+                    td
+                      | #{student.ratings[0].actualrating} (#{student.ratings[0].scope.name})
   if !pageturn
     div(class="pure-button-group" role="group" aria-label="..." data-pages=pagestotal data-page=page)
         button#page-first(class="pure-button pure-button-disabled") Первая

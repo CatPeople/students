@@ -14,6 +14,57 @@ form {
   padding-bottom: 10px;
 }
 
+@-webkit-keyframes green-fade {
+  from {
+    background: #DCFFDF;
+  }
+  to {
+    background: #fff;
+  }
+}
+@-moz-keyframes green-fade {
+  from {
+    background: #DCFFDF;
+  }
+  to {
+    background: #fff;
+  }
+}
+@keyframes green-fade {
+  from {
+    background: #DCFFDF;
+  }
+  to {
+    background: #fff;
+  }
+}
+
+@-webkit-keyframes green-fade-o {
+  from {
+    background: #DCFFDF;
+  }
+  to {
+    background: #F6F6F6;
+  }
+}
+@-moz-keyframes green-fade-o {
+  from {
+    background: #DCFFDF;
+  }
+  to {
+    background: #F6F6F6;
+  }
+}
+@keyframes green-fade-o {
+  from {
+    background: #DCFFDF;
+  }
+  to {
+    background: #F6F6F6;
+  }
+}
+
+
 .error {
   color: #FF5A5A;
   margin-left: 5px;
@@ -90,8 +141,7 @@ ul.types-list li {
 
 }
 
-.student-document-more {
-  display: inline-block;
+.student-document-more-container {
   border: 1px solid #aaa;
   padding: 10px;
 }
@@ -116,13 +166,15 @@ p {
 }
 
 .add-document-link {
-  background-color: #f1eeff;
+  background-color: #e6f2fe;
   padding: 5px 10px;
   border-radius: 5px;
-  border: 1px solid #555;
+  border: 2px solid #8ca1c0;
   font-size: 0.8rem;
   height: auto;
   color: #333;
+  display: inline-block;
+  margin-top: 3px;
 }
 
 .add-document-link:hover {
@@ -135,10 +187,10 @@ p {
 }
 
 .filelabel {
-  background-color: #f1eeff;
+  background-color: #e6f2fe;
   padding: 5px 10px;
   border-radius: 5px;
-  border: 1px solid #555;
+  border: 2px solid #8ca1c0;
   font-size: 0.8rem;
   height: auto;
   color: #333;
@@ -152,6 +204,7 @@ p {
 #cancel_button {
   float: right;
   display: none;
+  border: 1px solid #999
 }
 
 #student-name-edit-link {
@@ -171,7 +224,7 @@ p {
 }
 
 .student-entry {
-  line-height: 25px;
+
 }
 
 .file-delete-link {
@@ -189,7 +242,7 @@ p {
 ul#navigation {
   list-style-type: none;
   margin: 0;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
   padding: 0;
   overflow: hidden;
 
@@ -225,4 +278,138 @@ ul#navigation li a:hover:not(.active) {
 
 .student-list-group {
   color: #666;
+}
+
+#scope-and-rating {
+  display: none;
+}
+
+#rating {
+  width: 4em;
+}
+
+.scope-display-heading {
+  font-weight: bolder;
+}
+
+.scope-display-value {
+}
+
+.scope-container {
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px dotted #444;
+}
+
+.rating-display {
+  margin-left: 10px;
+  border-left: 1px dotted #bcbcbc;
+  padding: 2px;
+}
+.rating-display-a {
+  color: #a8a4a4;
+}
+
+.editdelete {
+  border-left: none !important
+}
+
+.documentbody:nth-child(odd) {
+  background-color: #F6F6F6;
+  -webkit-animation: green-fade-o 1s ease-in-out 0s;
+  -moz-animation: green-fade-o 1s ease-in-out 0s;
+  -o-animation: green-fade-o 1s ease-in-out 0s;
+  animation: green-fade-o 1s ease-in-out 0s;
+}
+
+.documentbody:nth-child(even) {
+  -webkit-animation: green-fade 1s ease-in-out 0s;
+  -moz-animation: green-fade 1s ease-in-out 0s;
+  -o-animation: green-fade 1s ease-in-out 0s;
+  animation: green-fade 1s ease-in-out 0s;
+}
+
+tbody {
+
+  border-bottom: 1px solid #cbcbcb;
+}
+
+table {
+    clear: both;
+}
+
+.student-data-container {
+  float: left;
+}
+
+.student-ratings {
+  display: inline-block;
+  margin-left: 15px;
+}
+
+
+.ratings-heading {
+  margin-top: 0;
+}
+
+.ratings-list {
+  list-style-position: inside;
+  padding-left: 0;
+}
+
+.theader {
+  vertical-align: middle;
+}
+
+.checkbox-in-list {
+  display: inline-block;
+  padding: 5px;
+  border-right: 1px solid #999;
+  border-bottom: 1px solid #999;
+}
+
+.checkbox-in-list:last-child {
+  border-right: none;
+}
+
+.student-list-spinner {
+  float: right;
+  display: none;
+}
+
+.pure-table-odd td, .pure-table-striped tr:nth-child(2n-1) td {
+    background-color: #F6F6F6;
+}
+
+.student-list-heading {
+  margin: 8px 0 8px 0;
+}
+
+.wrapper {
+  position: relative;
+  width: 20em;
+  background-color: #FCFCFC;
+  padding: 3px;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);
+  border: 1px solid #C9C9C9;
+}
+
+.progress-bar-fill {
+
+  background-image: linear-gradient(45deg, #fcef8f 25%, #fffdc9 25%, #fffdc9 50%, #fcef8f 50%, #fcef8f 75%, #fffdc9 75%, #fffdc9 100%);
+  background-size: 40.00px 40.00px;
+  height: 18px;
+  border-radius: 3px;
+  text-align: center;
+  padding: 4px 8px!important;
+  transition: width 500ms ease-in-out;
+}
+
+.progress-bar-label {
+  position: absolute;
+  font-weight: bold;
+  top: 8px;
+  left: 10px;
+  color:#333;
 }

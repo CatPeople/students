@@ -1,8 +1,36 @@
 extends layout
 
+block head
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  script(src='/javascripts/adminpanel.js')
+
 block content
   h1 Информация
   p Студентов в базе:
     b  #{studentscount}
+  p Документов в базе:
+    b  #{documentscount}
   p Логинов, ожидающих одобрения:
     b  #{userswaiting}
+  
+  if needpwchange
+    h1(style='margin-bottom: 0') Установить пароль
+    form.pure-form.pure-form-stacked(method='POST' action='' data-request_url='/auth/changepw')
+      span.error()
+      div.fields-container
+        div.field
+          label(for='password') Пароль
+          input#password(type='password' autocomplete='off' placeholder='' name='password')
+          span.error()
+        div.field
+          label(for='confirmation') Подтверждение
+          input#confirmation(type='password' autocomplete='off' placeholder='' name='confirmation')
+          span.error()
+        input#oldpassword(type='hidden' name='oldpassword' value='admin')
+      button.pure-button.pure-button-primary#form_submit(type='submit') Отправить
+      
+  h2 Google Drive
+  div.wrapper
+    - var prwidth = Math.round((driveusage / 16106127360) * 100)
+    div.progress-bar-fill(style="width: "+prwidth+"%;")
+    span.progress-bar-label #{filesize(driveusage)} / 15GB

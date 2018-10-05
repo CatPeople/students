@@ -14,6 +14,7 @@ var StudentSchema = new mongoose.Schema({
     year: Number
   },
   documents: [{type: mongoose.Schema.Types.ObjectId, ref: 'Document'}],
+  ratings: [{type: mongoose.Schema.Types.ObjectId, ref: 'Rating'}],
   graduated: Boolean
 })
 StudentSchema.plugin(mongoosePaginate);

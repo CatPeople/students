@@ -1,0 +1,9 @@
+h3.ratings-heading Рейтинги
+ul.ratings-list
+  - var overall = 0
+  for rating in student.ratings
+    if rating.actualrating != 0
+      - overall+=rating.actualrating
+      li #{rating.scope.name}: #{rating.actualrating}
+  if overall == 0
+    b Нет

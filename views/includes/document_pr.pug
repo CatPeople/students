@@ -1,0 +1,19 @@
+tbody(style='display: inline-block; width: 100%')
+  tr.student-document.student-document-more-link-container(data-names!=(document.names))
+        td
+          a.student-document-more-link(href='javascript:void(0)')
+            i.far.fa-file-alt(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+            span.student-document-more-link-text !{document.type}
+  tr.student-document-more
+    td(colspan="1")
+      div.student-document-more-container
+        div
+          div.scope-container
+            span.scope-display-heading Сфера: 
+            span.scope-display-value #{document.scope.name}
+            span.rating-display #{document.rating}
+            span.rating-display-a балл#{document.ruPluralize}
+          for pair in document.content
+            p 
+              b !{pair.field}: 
+              span.document-field-value !{pair.value}

@@ -3,7 +3,10 @@ var router = express.Router();
 
 var Student = require('../models/student')
 var Type = require('../models/type')
-var Document = require('../models/document')
+var documentmodels = require('../models/document')
+var Rating = require('../models/rating')
+var File = require('../models/file')
+var ServerInfo = require('../models/serverinfo')
 var async = require("async");
 const fs = require('fs');
 var mkdirp = require('mkdirp');
@@ -12,18 +15,91 @@ var rimraf = require("rimraf");
 var middlewares = require("./middlewares")
 var sanitizefilename = require("sanitize-filename");
 var pug = require('pug');
+var filesize = require("filesize")
 var pdf = require('html-pdf');
+const path = require('path');
 
 
 const { check, validationResult } = require('express-validator/check');
 const { matchedData, sanitize } = require('express-validator/filter');
 
+var scopeslist_local;
 
+
+documentmodels.Scope.find()
+.exec(function(err, scopeslist) {
+  if (err) {return console.log(err)}
+  scopeslist_local = scopeslist;
+})
+
+function updateRating(student, scope, addnumber, callback) {
+  var ratingobject;
+  student.ratings.forEach(function(rating) {
+    if (rating.scope._id.equals(scope._id)) {
+      ratingobject = rating
+    }
+  })
+  if (!ratingobject) {
+    ratingobject = new Rating({scope: scope, actualrating: 0})
+    Student.findByIdAndUpdate(student._id, { $push: { ratings: ratingobject._id } })
+    .exec(function(err) {
+      if (err) {return console.log(err)}
+      ratingobject.actualrating = ratingobject.actualrating + addnumber
+      Rating.findOneAndUpdate({_id: ratingobject._id}, ratingobject, {upsert: true}, function(err) {
+        if (err) {return console.log(err)}
+          callback()
+      })
+    })
+  }
+  else {
+  ratingobject.actualrating = parseInt(ratingobject.actualrating + parseInt(addnumber))
+  Rating.findOneAndUpdate({_id: ratingobject._id}, { $set: { actualrating: ratingobject.actualrating }}, {upsert: true, new: true}, function(err) {
+    if (err) {return console.log(err)}
+      callback()
+  })
+  }
+}
+
+function recalculateRatings(studentid, callback) {
+  Student.findById(studentid)
+  .populate('ratings')
+  .populate('documents')
+  .exec(function(err, student) {
+    if (err) {return console.log(err)}
+    async.each(student.ratings, function(rating, cb) {
+      Rating.findByIdAndUpdate(rating._id, { $set: { actualrating: 0 } }, function(err) {
+        if (err) {return console.log(err)}
+        cb()
+      })
+    }, function(err) {
+        if (err) {return console.log(err)}
+        async.eachSeries(student.documents, function(doc, cb) {
+          Student.findById(student._id)
+          .populate('ratings')
+          .populate('documents')
+          .exec(function(err, stud) {
+              if (err) {return console.log(err)}
+              updateRating(stud, doc.scope, doc.rating, function() {cb()})
+          })
+
+        }, function(err) {
+          if (err) {return console.log(err)}
+          Student.findById(student._id)
+          .populate({path: 'documents', populate: {path: 'scope'}}) // заполняем ссылки на документы объектами документов
+          .populate({path: 'ratings', populate: {path: 'scope'}})
+          .exec(function(err, newstudd) {
+            if (err) {return console.log(err)}
+            callback(newstudd)
+          })
+        })
+    })
+
+  })
+}
 
 // список студентов
 router.get('/', middlewares.reqlogin, function(req, res, next) {
   var page = 1; // по умолчанию первая страница
-  console.log(req.body)
   if (req.body.page) { // если запрошена конкретная страница
     page = parseInt(req.body.page) // переводим ее в integer и присваиваем
   }
@@ -41,7 +117,7 @@ router.get('/', middlewares.reqlogin, function(req, res, next) {
     Student.paginate({}, {page: page, limit: 15, sort: {'name.lastName': 1}}, function(err, list_students) {
       if (err) { return console.log(err); }
 
-      res.render('student_list', {userid: req.session.userId, student_list: list_students.docs, pagestotal: list_students.pages, grouplist: grouplist});
+      res.render('student_list', {userid: req.session.userId, student_list: list_students.docs, pagestotal: list_students.pages, grouplist: grouplist, scopes: scopeslist_local});
     })
   })
 
@@ -53,6 +129,7 @@ router.get('/', middlewares.reqlogin, function(req, res, next) {
 router.get('/page/ajax/:page', middlewares.reqlogin,
 sanitize('name').trim().escape(), // имя группы
 sanitize('studentname').trim().escape(), // имя студента
+sanitize('ratingscopes').trim().escape(),
 function(req, res, next) {
   var page = req.params.page; // req.params.page берется из адреса запроса, шаблон которого указан в router.get
                               // на 4 строки выше, например /student/page/ajax/5
@@ -66,7 +143,7 @@ function(req, res, next) {
   var patronymic;
   var splitsearch = req.query.studentname.split(' ', 3) // используем пробел как делимитер
                                                       // получаем 3 части, остальное отбрасываем
-  console.log(splitsearch)
+
   if (splitsearch) {
     lastName = splitsearch[0];
     if (splitsearch[1])
@@ -81,9 +158,6 @@ function(req, res, next) {
     firstName = '';
   if (!patronymic)
     patronymic = '';
-  console.log('Lastname: '+lastName);
-  console.log('Firstname: '+firstName);
-  console.log('patronymuc: '+patronymic);
   if (req.query.studentname && req.query.name) { // идет поиск и по имени, и по группе
     // здесь все три строки с кучей скобок - это один большой фильтр для поиска по базе студентов
     /*
@@ -120,20 +194,68 @@ function(req, res, next) {
   }
   else
   if (req.query.name) { // идет поиск только по имени группы, поэтому запрос простой
+    if (req.query.ratingscopes) {
+      var ratedstudents = [];
+      async.each(req.query.ratingscopes, function(ratingscope, cb) {
+        Student.find({'group.name': req.query.name, ratings: {$ne: null}})
+        .populate({path: 'ratings', match: {scope: ratingscope, actualrating: {$ne: 0}}, populate: {path: 'scope'}})
+        .exec(function(err, list_students) {
+          if (err) { return console.log(err); }
+            var i = list_students.length;
+            while (i--) {
+              if (list_students[i].ratings.length == 0) {
+                list_students.splice(i, 1)
+              }
+            }
+            ratedstudents = ratedstudents.concat(list_students)
+            cb();
+        })
+      }, function(err) {
+        if (err) { return console.log(err); }
+        ratedstudents.sort(function(a,b) {return b.ratings[0].actualrating - a.ratings[0].actualrating})
+        res.render('student_list', {student_list: ratedstudents, pagestotal: 1, pageturn: true, page: 1, ratingon: true});
+      })
+    }
+    else {
   Student.paginate({'group.name': req.query.name}, {page: page, limit: 15, sort: {'name.lastName': 1}}, function(err, list_students) {
     if (err) { return console.log(err); }
     res.render('student_list', {student_list: list_students.docs, pagestotal: list_students.pages, pageturn: true, page: page});
   })
+  }
 }
 else { // нет никаких поисков, клиент просто нажал перевернуть страницу
       // поисковый запрос пустой - {}, т.е. база ищет всех студентов
       // после пустого поискового запроса {} идет объект с опциями для функции paginate из модуля mongoosePaginate
       // она делит результат по 15, сортирует, разделяет на страницы, и возвращает список студентов с определенной страницы
       // страница была взята из запроса еще в самом начале этой всей длинной функции
+  var ratedstudents = [];
+  if (req.query.ratingscopes) {
+    async.each(req.query.ratingscopes, function(ratingscope, cb) {
+      Student.find({ratings: {$ne: null}})
+      .populate({path: 'ratings', match: {scope: ratingscope, actualrating: {$ne: 0}}, populate: {path: 'scope'}})
+      .exec(function(err, list_students) {
+        if (err) { return console.log(err); }
+          var i = list_students.length;
+          while (i--) {
+            if (list_students[i].ratings.length == 0) {
+              list_students.splice(i, 1)
+            }
+          }
+          ratedstudents = ratedstudents.concat(list_students)
+          cb();
+      })
+    }, function(err) {
+      if (err) { return console.log(err); }
+      ratedstudents.sort(function(a,b) {return b.ratings[0].actualrating - a.ratings[0].actualrating})
+      res.render('student_list', {student_list: ratedstudents, pagestotal: 1, pageturn: true, page: 1, ratingon: true});
+    })
+  }
+  else {
   Student.paginate({}, {page: page, limit: 15, sort: {'name.lastName': 1}}, function(err, list_students) {
     if (err) { return console.log(err); }
     res.render('student_list', {student_list: list_students.docs, pagestotal: list_students.pages, pageturn: true, page: page});
   })
+  }
 }
 
 });
@@ -166,7 +288,7 @@ function(req, res, next) {
     Student.paginate({}, {page: page, limit: 15, sort: {'name.lastName': 1}}, function(err, list_students) {
       if (err) { return console.log(err); }
 
-      res.render('student_list', { userid: req.session.userId, student_list: list_students.docs, page: page, pagestotal: list_students.pages, grouplist: grouplist});
+      res.render('student_list', { userid: req.session.userId, student_list: list_students.docs, page: page, pagestotal: list_students.pages, grouplist: grouplist, scopes: scopeslist_local});
     })
   })
 
@@ -222,7 +344,9 @@ router.get('/:id', middlewares.reqlogin, function(req, res, next) {
   // и ждем, пока обе выполнятся
   async.parallel([function(callback){
   Student.findById(req.params.id) // поиск студента по id
-  .populate('documents') // заполняем ссылки на документы объектами документов
+  .populate({path: 'documents', populate: {path: 'scope'}}) // заполняем ссылки на документы объектами документов
+  .populate({path: 'ratings', populate: {path: 'scope'}})
+  .populate({path: 'documents', populate: {path: 'files'}})
   .exec(function(err, student_data) { // получили студента
     if (err) {next(err); return console.log (err);}
     callback(null, student_data); // даем знать функции async.parallel, что эта функция выполнена, и передаем данные
@@ -235,17 +359,25 @@ function(callback) { // вторая параллельная функция
     if (err) { return console.log(err); }
     callback(null, list_types) // даем знать функции async.parallel, что эта функция выполнена, и передаем данные
   })
+},
+function(callback) { // третья параллельная функция из двух
+  documentmodels.Scope.find()
+  .exec(function(err, list_scopes) {
+    if(err) {return console.log(err)}
+    callback(null, list_scopes)
+  })
 }
 ], function(err, results) { // обе функции выполнились, results[0] данные студента, results[1] данные всех типов
   if (err) { return console.log(err); }
-  res.render('student_a', {userid: req.session.userId, student: results[0], types: results[1], request_url: "/student/"+results[0]._id});
+  res.render('student_a', {userid: req.session.userId, student: results[0], types: results[1], scopes: results[2], request_url: "/student/"+results[0]._id});
 })
 })
 
 // запрос на пдф файл, могут пользоваться и админ, и плебеи
 router.get('/printable/:id.pdf', middlewares.reqcommonlogin, function(req, res, next) {
   Student.findById(req.params.id) //ищем студента
-  .populate('documents')
+  .populate({path: 'documents', populate: {path: 'scope'}})
+  .populate({path: 'ratings', populate: {path: 'scope'}})
   .exec(function(err, student_data) {
     if (err) {next(err); return console.log (err);}
     // генерируем хтмл из специального шаблона
@@ -264,6 +396,11 @@ router.get('/printable/:id.pdf', middlewares.reqcommonlogin, function(req, res, 
 })
 
 
+var compiledDocument;
+var compiledFileEntry;
+
+
+
 // запрос на создание нового документа для студента
 router.post('/:id', middlewares.reqlogin, [
   function(req, res, next) {
@@ -278,12 +415,23 @@ router.post('/:id', middlewares.reqlogin, [
   check('fields').exists(),
   check('names').exists(),
   check('typename').exists(),
+  check('scope').exists(),
+  check('scope').custom(value => {
+    for(var scope of scopeslist_local) {
+      if(value == scope.name) {return true;}
+    }
+    throw new Error('Несуществующее значение')
+  }),
+  check('rating').isInt({min: 0, allow_leading_zeroes: false}),
   check('fields.*', 'Поле не может быть пустым').isLength({min: 1, max: 100}).trim(),
   check('names.*').isLength({min: 1, max: 100}).trim(),
   check('typename').isLength({min: 1, max: 100}).trim(),
   sanitize('fields.*').trim().escape(),
   sanitize('names.*').trim().escape(),
   sanitize('typename').trim().escape(),
+  sanitize('scope').trim().escape(),
+  sanitize('rating').trim().escape(),
+  sanitize('filesStatus').trim().escape(),
   function(req, res) {
 
     var errors = validationResult(req).array();
@@ -296,34 +444,42 @@ router.post('/:id', middlewares.reqlogin, [
     }
     else {
         // создаем новый документ
-        var newdoc = new Document({type: req.body.typename});
+        for(var scope of scopeslist_local) {
+          if(req.body.scope == scope.name) {req.body.scope = scope._id}
+        }
+        if (req.body.filesStatus) req.body.filesStatus = 'placeholder'
+        var newdoc = new documentmodels.Document({type: req.body.typename, scope: req.body.scope, rating: parseInt(req.body.rating)});
         for (var i = 0; i < req.body.names.length; i++) {
           // создаем пары имя-значение и толкаем их в массив content нового документа
           var newpair = {field: req.body.names[i], value: req.body.fields[i]}
           newdoc.content.push(newpair);
         }
         // сохраняем документ в базу, возвращаем объект документа в переменную thedoc
-        newdoc.save(function(err, thedoc) {
+        newdoc.save(function(err, docu) {
           if (err){
             errors.push({param: 'general', msg: 'DB Error'})
             res.send({errors: errors, status: 'failure'})
             return console.log(err);
           }
-          // находим студента по айди и толкаем в его массив документов ссылку на документ
-          Student.findByIdAndUpdate(req.params.id, { $push: { documents: thedoc._id } })
-          .exec(function(err) {
-            if (err) {
-              errors.push({param: 'general', msg: 'DB Error'})
-              res.send({errors: errors, status: 'failure'})
-              return console.log(err);
-            }
-            // успех, отправляем клиенту айди нового документа для создания ссылок и т.п.
-            res.send({errors: errors, status: 'Документ создан', id: thedoc._id})
+          documentmodels.Document.findOne(docu).populate('scope')
+          .exec(function(err, thedoc) {
+            // находим студента по айди и толкаем в его массив документов ссылку на документ
+            Student.findByIdAndUpdate(req.params.id, { $push: { documents: thedoc._id } }, {new: true})
+            .populate('ratings')
+            .exec(function(err, student) {
+              if (err) {
+                errors.push({param: 'general', msg: 'DB Error'})
+                res.send({errors: errors, status: 'failure'})
+                return console.log(err);
+              }
 
+              recalculateRatings(student._id, function(newstudd) {
+                // успех, отправляем клиенту айди нового документа для создания ссылок и т.п.
+                res.send({errors: errors, status: 'Документ создан', id: thedoc._id, visual: compiledDocument({document: thedoc, filesize: filesize, filesStatus: req.body.filesStatus}), ratingsvisual: compiledRatingsDisplay({student: newstudd})})
+              })
+            })
           })
-
         })
-
     }
 }])
 
@@ -341,12 +497,25 @@ router.post('/editdocument/:id', middlewares.reqlogin, [
   check('fields').exists(),
   check('names').exists(),
   check('typename').exists(),
+  check('scope').exists(),
+  check('studentid').exists(),
+  check('scope').custom(value => {
+    for(var scope of scopeslist_local) {
+      if(value == scope.name) {return true;}
+    }
+    throw new Error('Несуществующее значение')
+  }),
+  check('rating').isInt({min: 0, allow_leading_zeroes: false}),
   check('fields.*', 'Поле не может быть пустым').isLength({min: 1, max: 100}).trim(),
   check('names.*').isLength({min: 1, max: 100}).trim(),
   check('typename').isLength({min: 1, max: 100}).trim(),
   sanitize('fields.*').trim().escape(),
   sanitize('names.*').trim().escape(),
   sanitize('typename').trim().escape(),
+  sanitize('scope').trim().escape(),
+  sanitize('rating').trim().escape(),
+  sanitize('studentid').trim().escape(),
+  sanitize('filesStatus').trim().escape(),
   function(req, res) {
 
     var errors = validationResult(req).array();
@@ -358,19 +527,29 @@ router.post('/editdocument/:id', middlewares.reqlogin, [
       res.send({errors: errors, status: 'failure'})
     }
     else {
+      for(var scope of scopeslist_local) {
+        if(req.body.scope == scope.name) {req.body.scope = scope._id}
+      }
+      if (req.body.filesStatus) req.body.filesStatus = 'placeholder'
       var newcontent = []
       for (var i = 0; i < req.body.names.length; i++) {
         var newpair = {field: req.body.names[i], value: req.body.fields[i]}
         newcontent.push(newpair);
       }
       // ищем документ по айди и полностью обновляем его содержимое
-      Document.update({ _id: req.params.id }, { $set: { type: req.body.typename, content: newcontent }}, function(err) {
+      documentmodels.Document.findByIdAndUpdate(req.params.id, { $set: { type: req.body.typename, content: newcontent, scope: req.body.scope, rating: parseInt(req.body.rating) }}, {new: true}).
+      populate('scope')
+      .populate('files')
+      .exec(function(err, updateddoc) {
         if (err){
           errors.push({param: 'general', msg: 'DB Error'})
           res.send({errors: errors, status: 'failure'})
           return console.log(err);
         }
-        res.send({id:req.params.id, errors: errors, status: 'Успешно'})
+        recalculateRatings(req.body.studentid, function(newstudd) {
+            res.send({id:req.params.id, errors: errors, status: 'Успешно', visual: compiledDocument({document: updateddoc, filesize: filesize, filesStatus: req.body.filesStatus}), ratingsvisual: compiledRatingsDisplay({student: newstudd})})
+        })
+
       });
 
     }
@@ -416,6 +595,9 @@ router.post('/editstudent/:id', middlewares.reqlogin, [
     }
 }])
 
+
+var gd = require('../googledrive');
+
 // удаляем студента
 router.delete('/delete/:id', middlewares.reqlogin, function(req, res) {
   // ищем по айди и удаляем
@@ -427,17 +609,21 @@ router.delete('/delete/:id', middlewares.reqlogin, function(req, res) {
     if (student.documents) { // если у него были ссылки на документы
       async.eachSeries(student.documents, function updateObject (obj, done) {
         // то удаляем каждый документ
-        Document.findByIdAndRemove(obj, function(err) {
+        documentmodels.Document.findOne({_id: obj}, function(err, doc) {
           if (err){
             done();
             return console.log(err);
           }
-            // и папку с файлами, привязанными к этому документу
-            rimraf(__dirname +'/../public/docs-storage/'+obj, function() {})
-            done();
+            doc.remove(function(err) {
+              if (err){
+                done();
+                return console.log(err);
+              }
+              done();
+            })
+
         })
       }, function allDone (err) {
-          console.log('all done')
           res.send({status: 'success'})
       });
     }
@@ -450,89 +636,139 @@ router.delete('/delete/:id', middlewares.reqlogin, function(req, res) {
 
 router.delete('/deletedocument/:id', middlewares.reqlogin, function(req, res) {
   // ищем документ по айди и удаляем его
-  Document.findByIdAndRemove(req.params.id, function(err) {
+  documentmodels.Document.findOne({_id: req.params.id}, function(err, doc) {
     if (err){
       res.send({error: err, status: 'failure'})
       return console.log(err);
     }
-    // ищем студента, к которому был привязан документ (его айди присылает клиент)
-    // и удаляем ссылку на документ из массива
-    Student.findByIdAndUpdate(req.body.studentid, { $pull: { documents: req.params.id } })
-    .exec(function(err) {
-      if (err) {
+    doc.remove(function(err) {
+      if (err){
         res.send({error: err, status: 'failure'})
         return console.log(err);
       }
-      // удаляем папку с файлами
-      rimraf(__dirname +'/../public/docs-storage/'+req.params.id, function() {})
-      res.send({status: 'success'})
+      Student.findByIdAndUpdate(req.body.studentid, { $pull: { documents: req.params.id } })
+      .exec(function(err) {
+        if (err) {
+          res.send({error: err, status: 'failure'})
+          return console.log(err);
+        }
+        recalculateRatings(req.body.studentid, function(newstudd) {
+          res.send({status: 'success', ratingsvisual: compiledRatingsDisplay({student: newstudd})})
+        })
+
+      })
     })
+    // ищем студента, к которому был привязан документ (его айди присылает клиент)
+    // и удаляем ссылку на документ из массива
+
   })
 })
 
-router.delete('/deletefile/:id', middlewares.reqlogin, function(req, res) {
-    var filename = sanitizefilename(req.body.filename)
-    // ищем документ, к которому привязан файл и вытаскиваем файл из массива с именами файлов
-    Document.findByIdAndUpdate(req.params.id, { $pull: { files: filename } })
-    .exec(function(err) {
-      if(err) {
-        res.send({error: err, status: 'failure'})
-        return console.log(err)
-      }
-      // удаляем файл из файловой системы
-      fs.unlink(__dirname +'/../public/docs-storage/'+req.params.id+'/'+filename, function(err) {
+router.delete('/deletefile/:id', middlewares.reqlogin,
+ sanitize('fileid').trim().escape(),
+ function(req, res) {
+
+    File.findByIdAndRemove(req.body.fileid, function(err, file) {
+      if (err) return res.send({error: err, status: 'failure'})
+      documentmodels.Document.findByIdAndUpdate(req.params.id, { $pull: { files: file._id } })
+      .exec(function(err) {
         if(err) {
           res.send({error: err, status: 'failure'})
           return console.log(err)
         }
-        res.send({status: 'success'})
-      })
+        gd.jwtClient().authorize(function (err, tokens) {
+         if (err) {
+           console.log(err);
+           return;
+         } else {
+           let drive = gd.google().drive('v3');
+           drive.files.delete({
+              auth: gd.jwtClient(),
+              fileId: file.id
+           }, function (err, response) {
+              if (err) {
+                  console.log('The API returned an error: ' + err);
+                  return res.send({error: err, status: 'failure'})
+              }
+              res.send({status: 'success'})
+              ServerInfo.findOneAndUpdate({'name': 'driveUsageEstimate'}, { $inc: {valueNumber: -parseInt(file.size)}}, function(err) {if(err) console.log(err)})
 
+           });
+         }
+        })
+
+      })
     })
 
 })
+
+
 
 router.post('/fileupload/:id', middlewares.reqlogin, function(req, res) {
   if (!req.files)
     return res.status(400).send({nice: "not nice"});
   // обрабатываем имя файла, удаляя спецсимволы и прочее
   var newname = sanitizefilename(req.files.files.name)
-  // создаем папку для файлов документа с этим айди, если ее нет
-  mkdirp(__dirname +'/../public/docs-storage/'+req.params.id, function(err) {
-    if (err) {
-      console.log(err)
-      return res.send(err);
-    }
-    // смотрим есть ли там уже файл с таким именем
-    fs.access(__dirname +'/../public/docs-storage/'+req.params.id+'/'+newname, function(err) {
-      if (err && err.code === 'ENOENT') { // нет файла, ничего не делаем
-      }
-      else { // файл уже есть, прибавляем 4 рандомных символа
-        newname = randomstring.generate(4)+'-'+newname
-      }
-      // двигаем загруженный файл в папку документа
-      req.files.files.mv(__dirname +'/../public/docs-storage/'+req.params.id+'/'+newname, function(err) {
-        if (err) {
-          console.log(err)
-          return res.send(err);
-        }
-        // добавляем имя файла в массив файлов документа в базе
-        Document.findByIdAndUpdate(req.params.id, { $push: { files: newname } })
-        .exec(function(err) {
-          if (err) {
-            res.send({error: err, status: 'failure'})
-            return console.log(err);
-          }
-          res.send({nice: "nice", docid: req.params.id, filename: newname})
-        })
+  var fileSize = req.files.files.data.byteLength;
+  const { Readable } = require('stream');
+  const stream = new Readable();
+  stream.push(req.files.files.data);
+  stream.push(null);
 
-      })
-    })
+  var fileMetadata = {
+    'name': newname,
+    parents: ['1szwMA0l3yJK0ZGqL31x9Mc7XgRgKHXjt']
+  };
+  var media = {
+    mimeType: req.files.files.mimetype,
+    body: stream
+  };
+  gd.jwtClient().authorize(function (err, tokens) {
+   if (err) {
+     console.log(err);
+     return res.send(err);
+   } else {
+     let drive = gd.google().drive('v3');
+     drive.files.create({
+       auth: gd.jwtClient(),
+       resource: fileMetadata,
+       media: media,
+       fields: 'id, webViewLink'
+     }, function (err, file) {
+       if (err) {
+         // Handle error
+         console.error(err);
+         return res.send(err);
+       } else {
+         var newfile = new File({
+           id: file.data.id,
+           name: newname,
+           url: file.data.webViewLink,
+           size: fileSize
+         })
+         newfile.save(function(err) {
+           if (err) {return console.log(err)}
+           documentmodels.Document.findByIdAndUpdate(req.params.id, { $push: { files: newfile._id } })
+           .exec(function(err) {
+             if (err) {
+               res.send({error: err, status: 'failure'})
+               return console.log(err);
+             }
+             res.send({nice: "nice", docid: req.params.id, filename: newname, visual: compiledFileEntry({document: {_id: req.params.id}, file: newfile, filesize: filesize})})
+             ServerInfo.findOneAndUpdate({'name': 'driveUsageEstimate'}, { $inc: {valueNumber: parseInt(newfile.size)}}, {upsert: true}, function(err) {if(err) console.log(err)})
+           })
+         })
 
-
-  });
-
-
+       }
+     });
+   }
+  })
 
 })
-module.exports = router;
+
+module.exports = function(viewspath){
+    compiledDocument = pug.compileFile(path.join(viewspath, 'includes/document.pug'));
+    compiledFileEntry = pug.compileFile(path.join(viewspath, 'includes/file-entry.pug'));
+    compiledRatingsDisplay = pug.compileFile(path.join(viewspath, 'includes/ratings-display.pug'));
+    return router;
+}

@@ -1,0 +1,35 @@
+tbody.documentbody
+  tr.student-document.student-document-more-link-container(data-names!=(document.names))
+        td
+          a.student-document-more-link(href='javascript:void(0)')
+            i.far.fa-file-alt(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+            span.student-document-more-link-text !{document.type}
+        td
+          span #{document.rating} балл#{document.ruPluralize}
+        td
+          span #{document.scope.name}
+        td.editdelete
+          a.document-edit-link(href='javascript:void(0)' data-url='/student/editdocument/'+document._id)
+            i.fas.fa-pencil-alt(style="font-size: 20px; color: green; margin-left: 5px;")
+          a.document-delete-link(href='javascript:void(0)' data-url='/student/deletedocument/'+document._id)
+            i.fas.fa-trash-alt(style="font-size: 20px; color: red; margin-left: 5px;")
+  tr.student-document-more
+    td(colspan="1")
+      div.student-document-more-container
+        div
+          div.scope-container
+            span.scope-display-heading Сфера: 
+            span.scope-display-value #{document.scope.name}
+            span.rating-display #{document.rating}
+            span.rating-display-a балл#{document.ruPluralize}
+          for pair in document.content
+            p 
+              b !{pair.field}: 
+              span.document-field-value !{pair.value}
+          if document.files.length != 0 || filesStatus == 'placeholder'
+            b Прикрепленные файлы: 
+            div.attached-files
+              if filesStatus != 'placeholder'
+                for file in document.files
+                  include file-entry.pug
+    td.form-slot(colspan="3")
