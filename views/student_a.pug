@@ -58,7 +58,7 @@ block content
             for scope in scopes
               option(value=scope.name)
                 | #{scope.name}
-          input#rating(type='number' min='0' name='rating' value='' required placeholder='Баллы')
+          input#rating(type='number' min='0' name='rating' value='' required step="0.5" placeholder='Баллы')
         div
           button.pure-button.pure-button-primary#form_submit(type='submit') Подтвердить
           i.submitspinner.fas.fa-spinner.fa-spin(style="font-size: 20px; margin-left: 5px; color: black; vertical-align: middle; display: none")

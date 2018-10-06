@@ -52,7 +52,7 @@ function updateRating(student, scope, addnumber, callback) {
     })
   }
   else {
-  ratingobject.actualrating = parseInt(ratingobject.actualrating + parseInt(addnumber))
+  ratingobject.actualrating = +ratingobject.actualrating + (+addnumber)
   Rating.findOneAndUpdate({_id: ratingobject._id}, { $set: { actualrating: ratingobject.actualrating }}, {upsert: true, new: true}, function(err) {
     if (err) {return console.log(err)}
       callback()
@@ -422,7 +422,7 @@ router.post('/:id', middlewares.reqlogin, [
     }
     throw new Error('Несуществующее значение')
   }),
-  check('rating').isInt({min: 0, allow_leading_zeroes: false}),
+  check('rating').isNumeric(),
   check('fields.*', 'Поле не может быть пустым').isLength({min: 1, max: 100}).trim(),
   check('names.*').isLength({min: 1, max: 100}).trim(),
   check('typename').isLength({min: 1, max: 100}).trim(),
@@ -448,7 +448,7 @@ router.post('/:id', middlewares.reqlogin, [
           if(req.body.scope == scope.name) {req.body.scope = scope._id}
         }
         if (req.body.filesStatus) req.body.filesStatus = 'placeholder'
-        var newdoc = new documentmodels.Document({type: req.body.typename, scope: req.body.scope, rating: parseInt(req.body.rating)});
+        var newdoc = new documentmodels.Document({type: req.body.typename, scope: req.body.scope, rating: +req.body.rating});
         for (var i = 0; i < req.body.names.length; i++) {
           // создаем пары имя-значение и толкаем их в массив content нового документа
           var newpair = {field: req.body.names[i], value: req.body.fields[i]}
@@ -505,7 +505,7 @@ router.post('/editdocument/:id', middlewares.reqlogin, [
     }
     throw new Error('Несуществующее значение')
   }),
-  check('rating').isInt({min: 0, allow_leading_zeroes: false}),
+  check('rating').isNumeric(),
   check('fields.*', 'Поле не может быть пустым').isLength({min: 1, max: 100}).trim(),
   check('names.*').isLength({min: 1, max: 100}).trim(),
   check('typename').isLength({min: 1, max: 100}).trim(),
@@ -537,7 +537,7 @@ router.post('/editdocument/:id', middlewares.reqlogin, [
         newcontent.push(newpair);
       }
       // ищем документ по айди и полностью обновляем его содержимое
-      documentmodels.Document.findByIdAndUpdate(req.params.id, { $set: { type: req.body.typename, content: newcontent, scope: req.body.scope, rating: parseInt(req.body.rating) }}, {new: true}).
+      documentmodels.Document.findByIdAndUpdate(req.params.id, { $set: { type: req.body.typename, content: newcontent, scope: req.body.scope, rating: +req.body.rating }}, {new: true}).
       populate('scope')
       .populate('files')
       .exec(function(err, updateddoc) {

@@ -33,7 +33,6 @@ app.use((req, res, next) => {
 })
 // Подключение к базе
 app.use(fileUpload());
-
 var dbURI = "URI"
 
 var db = mongoose.connection;

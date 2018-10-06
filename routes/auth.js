@@ -5,14 +5,35 @@ var randomstring = require("randomstring");
 var middlewares = require("./middlewares")
 var nodemailer = require('nodemailer');
 var conf = require('../config.json');
-let privatekey = require("../privatekey.json");
+var credentials = require('../credentials.json');
+
+const { google } = require("googleapis");
+const OAuth2 = google.auth.OAuth2;
+
+const oauth2Client = new OAuth2(
+     credentials.web.client_id,
+     credentials.web.client_secret,
+     "https://developers.google.com/oauthplayground"
+);
+
+oauth2Client.setCredentials({
+     refresh_token: credentials.refresh_token
+});
+
+
+const accessToken = oauth2Client.refreshAccessToken()
+     .then(res => res.credentials.access_token);
 
 
 var transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
+    type: "OAuth2",
     user: conf.mailLogin,
-    pass: conf.mailPassword
+    clientId: credentials.web.client_id,
+    clientSecret: credentials.web.client_secret,
+    refreshToken: credentials.refresh_token,
+    accessToken: accessToken
   }
 });
 
