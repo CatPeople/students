@@ -211,8 +211,7 @@ function(req, res, next) {
 
 router.post('/requestreset',
 check('username').exists(),
-check('username', 'E-mail не может быть пустым').isLength({min: 0, max: 100}).trim(),
-check('username', 'Пожалуйста, введите существующий e-mail').isEmail(),
+check('username', 'E-mail не может быть пустым').isLength({min: 1, max: 100}).trim(),
 sanitize('username').trim().escape(),
 function(req, res, next){
   var errors = validationResult(req).array();
