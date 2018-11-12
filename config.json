@@ -1,4 +1,5 @@
 {
   "mailLogin": "",
-  "sessionSecret": ""
+  "sessionSecret": "",
+  "baseUrl": "http://localhost:3000"
 }

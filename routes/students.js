@@ -117,7 +117,7 @@ router.get('/', middlewares.reqlogin, function(req, res, next) {
     Student.paginate({}, {page: page, limit: 15, sort: {'name.lastName': 1}}, function(err, list_students) {
       if (err) { return console.log(err); }
 
-      res.render('student_list', {userid: req.session.userId, student_list: list_students.docs, pagestotal: list_students.pages, grouplist: grouplist, scopes: scopeslist_local});
+      res.render('student_list', {title: 'Студенты', userid: req.session.userId, login: req.session.login, student_list: list_students.docs, pagestotal: list_students.pages, grouplist: grouplist, scopes: scopeslist_local});
     })
   })
 
@@ -178,7 +178,7 @@ function(req, res, next) {
       // возвращено 15 студентов, удовлетворяющих поиску, рендерится новый список с новыми значениями страниц
       // переменную pageturn устанавливаем true, в таком случае движок темплейтов возвращает только хтмл списка и ничего больше
       // для того, чтобы обновить список у клиента, вместо всей страницы. Проверка этой переменной идет в шаблоне student_list
-      res.render('student_list', {student_list: list_students.docs, pagestotal: list_students.pages, pageturn: true, page: page});
+      res.render('student_list', {title: 'Студенты', student_list: list_students.docs, pagestotal: list_students.pages, pageturn: true, page: page});
     })
   }
   else
@@ -189,7 +189,7 @@ function(req, res, next) {
                           {$or:[{'name.firstName':{$regex: patronymic, $options: 'i'}},{'name.lastName':{$regex: patronymic, $options: 'i'}}, {'name.patronymic':{$regex: patronymic, $options: 'i'}}]}]}, {page: page, limit: 15, sort: {'name.lastName': 1}}, function(err, list_students) {
       if (err) { return console.log(err); }
       // рендерим список из 15 студентов
-      res.render('student_list', {student_list: list_students.docs, pagestotal: list_students.pages, pageturn: true, page: page});
+      res.render('student_list', {title: 'Студенты', student_list: list_students.docs, pagestotal: list_students.pages, pageturn: true, page: page});
     })
   }
   else
@@ -213,13 +213,13 @@ function(req, res, next) {
       }, function(err) {
         if (err) { return console.log(err); }
         ratedstudents.sort(function(a,b) {return b.ratings[0].actualrating - a.ratings[0].actualrating})
-        res.render('student_list', {student_list: ratedstudents, pagestotal: 1, pageturn: true, page: 1, ratingon: true});
+        res.render('student_list', {title: 'Студенты', student_list: ratedstudents, pagestotal: 1, pageturn: true, page: 1, ratingon: true});
       })
     }
     else {
   Student.paginate({'group.name': req.query.name}, {page: page, limit: 15, sort: {'name.lastName': 1}}, function(err, list_students) {
     if (err) { return console.log(err); }
-    res.render('student_list', {student_list: list_students.docs, pagestotal: list_students.pages, pageturn: true, page: page});
+    res.render('student_list', {title: 'Студенты', student_list: list_students.docs, pagestotal: list_students.pages, pageturn: true, page: page});
   })
   }
 }
@@ -247,13 +247,13 @@ else { // нет никаких поисков, клиент просто наж
     }, function(err) {
       if (err) { return console.log(err); }
       ratedstudents.sort(function(a,b) {return b.ratings[0].actualrating - a.ratings[0].actualrating})
-      res.render('student_list', {student_list: ratedstudents, pagestotal: 1, pageturn: true, page: 1, ratingon: true});
+      res.render('student_list', {title: 'Студенты', student_list: ratedstudents, pagestotal: 1, pageturn: true, page: 1, ratingon: true});
     })
   }
   else {
   Student.paginate({}, {page: page, limit: 15, sort: {'name.lastName': 1}}, function(err, list_students) {
     if (err) { return console.log(err); }
-    res.render('student_list', {student_list: list_students.docs, pagestotal: list_students.pages, pageturn: true, page: page});
+    res.render('student_list', {title: 'Студенты', student_list: list_students.docs, pagestotal: list_students.pages, pageturn: true, page: page});
   })
   }
 }
@@ -288,14 +288,14 @@ function(req, res, next) {
     Student.paginate({}, {page: page, limit: 15, sort: {'name.lastName': 1}}, function(err, list_students) {
       if (err) { return console.log(err); }
 
-      res.render('student_list', { userid: req.session.userId, student_list: list_students.docs, page: page, pagestotal: list_students.pages, grouplist: grouplist, scopes: scopeslist_local});
+      res.render('student_list', {title: 'Студенты', userid: req.session.userId, login: req.session.login, student_list: list_students.docs, page: page, pagestotal: list_students.pages, grouplist: grouplist, scopes: scopeslist_local});
     })
   })
 
 });
 
 router.get('/newstudent/create', middlewares.reqlogin, function(req, res, next) {
-  res.render('newstudent', {userid: req.session.userId});
+  res.render('newstudent', {title: 'Создать студента', userid: req.session.userId, login: req.session.login});
 })
 
 router.post('/newstudent/create', middlewares.reqlogin,
@@ -332,7 +332,7 @@ function(req, res, next) {
 });
 
 router.post('/newstudent/create', middlewares.reqlogin, function(req, res, next) {
-    res.render('newstudent', {userid: req.session.userId});
+    res.render('newstudent', {title: 'Создать студента', userid: req.session.userId, login: req.session.login});
 
 });
 
@@ -369,7 +369,7 @@ function(callback) { // третья параллельная функция и�
 }
 ], function(err, results) { // обе функции выполнились, results[0] данные студента, results[1] данные всех типов
   if (err) { return console.log(err); }
-  res.render('student_a', {userid: req.session.userId, student: results[0], types: results[1], scopes: results[2], request_url: "/student/"+results[0]._id});
+  res.render('student_a', {title: results[0].fullName+' | '+results[0].group.name, userid: req.session.userId, login: req.session.login, student: results[0], types: results[1], scopes: results[2], request_url: "/student/"+results[0]._id});
 })
 })
 
@@ -381,7 +381,7 @@ router.get('/printable/:id.pdf', middlewares.reqcommonlogin, function(req, res, 
   .exec(function(err, student_data) {
     if (err) {next(err); return console.log (err);}
     // генерируем хтмл из специального шаблона
-    var html = pug.renderFile('views/student_printable.pug', {userid: req.session.userId, student: student_data, request_url: "/student/"+student_data._id});
+    var html = pug.renderFile('views/student_printable.pug', {userid: req.session.userId, login: req.session.login, student: student_data, request_url: "/student/"+student_data._id});
     // создаем из этого хтмл пдф
     pdf.create(html).toStream(function(err, stream) {
         if (err) {

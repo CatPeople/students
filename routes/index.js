@@ -20,7 +20,7 @@ const fs = require('fs');
 router.get('/', function(req, res, next) {
   // главная страница редиректит в зависимости от логина
     // админа во вкладку "информация"
-    if (req.session && req.session.userId == "5aaad9cef86881299850be7b")
+    if (req.session && req.session.login == "admin")
       res.redirect('/adminpanel');
     // других пользователей во вкладку поиск
     else if (req.session && req.session.userId)
@@ -31,7 +31,7 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/search', middlewares.reqcommonlogin, function (req, res) {
-  res.render('search', {userid: req.session.userId});
+  res.render('search', {userid: req.session.userId, login: req.session.login, title: 'Поиск'});
 })
 
 
@@ -73,17 +73,17 @@ function(req, res, next) {
     .populate({path: 'ratings', populate: {path: 'scope'}})
     .exec(function(err, students) {
       if (err) {
-        res.render('search', {userid: req.session.userId});
+        res.render('search', {userid: req.session.userId, login: req.session.login, title: 'Поиск'});
         return console.log(err)
       }
       if (students.length == 1) { // найден всего один студент, рендерим его страницу
-        res.render('student', {userid: req.session.userId, student: students[0]});
+        res.render('student', {userid: req.session.userId, student: students[0], login: req.session.login, title: students[0].fullName+' | '+results[0].group.name});
       }
       else if (students.length == 0) { // не найдено ни одного, рендерим снова поиск и передаем переменную, что не найдено
-        res.render('search', {userid: req.session.userId, nothing: true});
+        res.render('search', {userid: req.session.userId, nothing: true, login: req.session.login, title: 'Поиск'});
       }
       else { // найдено несколько студентов, рендерим список (где клиент уточняет группу)
-        res.render('search_list', {userid: req.session.userId, student_list: students});
+        res.render('search_list', {userid: req.session.userId, student_list: students, login: req.session.login, title: 'Поиск'});
       }
     })
   }
@@ -94,14 +94,14 @@ function(req, res, next) {
     .populate({path: 'ratings', populate: {path: 'scope'}})
     .exec(function(err, students) {
       if (err) {
-        res.render('search', {userid: req.session.userId});
+        res.render('search', {userid: req.session.userId, login: req.session.login, title: 'Поиск'});
         return console.log(err)
       }
       if (students.length == 1) {
-        res.render('student', {userid: req.session.userId, student: students[0]});
+        res.render('student', {userid: req.session.userId, student: students[0], login: req.session.login, title: students[0].fullName+' | '+results[0].group.name});
       }
       else {
-        res.render('search_list', {userid: req.session.userId, student_list: students});
+        res.render('search_list', {userid: req.session.userId, student_list: students, login: req.session.login, title: 'Поиск'});
       }
     })
   }
@@ -132,12 +132,12 @@ router.get('/adminpanel', middlewares.reqlogin, function(req, res, next) {
             }
             ServerInfo.findOne({'name': 'driveUsageEstimate'}, function(err, entry) {
               if (err) {
-                return res.render('adminpanel', {userid: req.session.userId, studentscount: students, userswaiting: userswaiting.length, documentscount: documentscount, needpwchange: needpwchange, driveusage: 0});
+                return res.render('adminpanel', {title: 'Информация', userid: req.session.userId, login: req.session.login, studentscount: students, userswaiting: userswaiting.length, documentscount: documentscount, needpwchange: needpwchange, driveusage: 0});
               }
               if(entry)
-                res.render('adminpanel', {userid: req.session.userId, studentscount: students, userswaiting: userswaiting.length, documentscount: documentscount, needpwchange: needpwchange, driveusage: entry.valueNumber});
+                res.render('adminpanel', {title: 'Информация', userid: req.session.userId, login: req.session.login, studentscount: students, userswaiting: userswaiting.length, documentscount: documentscount, needpwchange: needpwchange, driveusage: entry.valueNumber});
               else
-                return res.render('adminpanel', {userid: req.session.userId, studentscount: students, userswaiting: userswaiting.length, documentscount: documentscount, needpwchange: needpwchange, driveusage: 0});
+                return res.render('adminpanel', {title: 'Информация', userid: req.session.userId, login: req.session.login, studentscount: students, userswaiting: userswaiting.length, documentscount: documentscount, needpwchange: needpwchange, driveusage: 0});
             })
 
           })
@@ -149,7 +149,7 @@ router.get('/adminpanel', middlewares.reqlogin, function(req, res, next) {
 });
 
 router.get('/newtype', middlewares.reqlogin, function(req, res) {
-  res.render('newtype_form', {userid: req.session.userId, header: "Создать новый тип документа", request_url: "/newtype"});
+  res.render('newtype_form', {title: 'Создать новый тип документа', userid: req.session.userId, login: req.session.login, header: "Создать новый тип документа", request_url: "/newtype"});
 })
 
 router.post('/newtype', middlewares.reqlogin, [

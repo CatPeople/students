@@ -6,11 +6,46 @@ $(document).ready(function(){
       // запрос обработается сервером в /routes/auth.js router.get('/logout'
     })
 
+    $('#passwordresetlink').click(function() {
+      $('form').children('.success').html("").hide()
+      $('.error').each(function(){ //опустошаем все span с ошибками, т.к. новый запрос
+        $(this).html('')
+      })
+      if ($('#login').val() != "")  {
+        $.ajax({
+          url: "/auth/requestreset",
+          timeout: 10000,
+          type:'POST',
+          data: {"username": $('#login').val()}
+        }).done(response => {
+          if (response.errors.length != 0) {
+            for (var i = 0; i < response['errors'].length; i++) {
+              if (response['errors'][i]['param'] == 'general') {
+                $('form').children('.error').html(response['errors'][i]['msg']).hide().fadeIn() // отображаем
+              }
+              else{
+                var fieldname = response['errors'][i]['param']
+                $("input[name='"+fieldname+"']").parent().children('.error').html(response['errors'][i]['msg']).hide().fadeIn() //отображаем
+              }
+            }
+          }
+          else {
+            $('form').children('.success').html(response['message']).hide().fadeIn()
+            $(this).fadeOut()
+          }
+        })
+      }
+      else {
+        $("input[name='username']").parent().children('.error').html('Пожалуйста, введите e-mail в этом поле').hide().fadeIn()
+      }
+    })
+
 
     $form.on('submit', submitHandler)
 
     function submitHandler (e) { // перехват отправки формы
       e.preventDefault()
+      $('form').children('.success').html("").hide().fadeIn()
       $(this).children('#form_submit').prop('disabled', true); // отключаем кнопку, пока не закончится запрос
       $('.error').each(function(){ //опустошаем все span с ошибками, т.к. новый запрос
         $(this).html('')

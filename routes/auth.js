@@ -6,6 +6,7 @@ var middlewares = require("./middlewares")
 var nodemailer = require('nodemailer');
 var conf = require('../config.json');
 var credentials = require('../credentials.json');
+var crypto = require('crypto');
 
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
@@ -49,7 +50,7 @@ const fs = require('fs');
 
 
 router.get('/', function(req, res, next) {
-  res.render('login', { userid: req.session.userId, login: req.session.login});
+  res.render('login', { userid: req.session.userId, login: req.session.login, title: 'Войти'});
 
 });
 
@@ -66,11 +67,12 @@ router.get('/requests', middlewares.reqlogin, function(req, res, next) {
         return console.log(err)
       }
       // Рендер
-      res.render('requests', { userid: req.session.userId, student_list: userlist, approved_list: approvedlist});
+      res.render('requests', { userid: req.session.userId, student_list: userlist, approved_list: approvedlist, login: req.session.login, title: 'Заявки на регистрацию'});
     })
   })
 
 });
+
 
 
 
@@ -106,8 +108,8 @@ function(req, res, next) {
         var mailOptions = {
           from: 'REDACTED',
           to: user.login,
-          subject: 'Please change this at routes/auth.js :mailOptions',
-          text: 'Your login is '+user.login+' and your password is '+passw
+          subject: 'Please change this at routes/auth.js :111',
+          text: 'Approved!'
         };
           transporter.sendMail(mailOptions, (err, info) => {
             if (err) {
@@ -143,15 +145,116 @@ else {
 
 router.get('/registration', function(req, res, next) {
   if (req.session.userId) { // если уже залогинен
-    res.render('login', { userid: req.session.userId, login: req.session.login});
+    res.render('login', { userid: req.session.userId, login: req.session.login, title: 'Войти'});
   }
   else {
     var captcha = svgCaptcha.createMathExpr(); // создаем капчу
     req.session.captcha = captcha.text; // сохраняем ответ на капчу в сессии
-    res.render('registration', {captcha: captcha.data}); // рендерим форму регистрации
+    res.render('registration', {captcha: captcha.data, title: 'Регистрация'}); // рендерим форму регистрации
   }
 
 });
+
+router.get('/passwordreset/:token',
+function(req, res, next) {
+  User.findOne({"passwordResetToken": req.params.token}, function(err, user) {
+    if (err) {return console.log(err)}
+    if (user && user.passwordResetExpiration > Date.now()) {
+      res.render('passwordreset', {title: 'Новый пароль'});
+    }
+    else {
+      var error = {status: "", stack: ""}
+      res.render('error', {message: 'Неверная либо устаревшая ссылка', error: error, title: 'Неверная либо устаревшая ссылка'});
+    }
+  })
+});
+
+router.post('/passwordreset/:token',
+check('password').exists(),
+check('confirmation').exists(),
+check('password', 'Минимальная длина: 8 символов').isLength({min: 8, max: 100}).trim(),
+check('password', 'Ошибка, выберите другой пароль').matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d[\]{};:=<.,>_+^#$@!%*?&]{8,}$/, 'g'),
+sanitize('password').trim().escape(),
+sanitize('confirmation').trim().escape(),
+function(req, res, next) {
+  var errors = validationResult(req).array();
+  if (errors.length!=0) {
+    res.send({errors: errors, body: req.body, status: 'failure'})
+  }
+  else {
+    if(req.body.password != req.body.confirmation) {
+      errors.push({param: 'confirmation', msg: 'Пароли не совпадают'})
+      return res.send({errors: errors, status: 'failure'})
+    }
+    User.findOne({"passwordResetToken": req.params.token}, function(err, user) {
+      if (err) {return console.log(err)}
+      if (user && user.passwordResetExpiration > Date.now()) {
+        var pass = req.body.password
+        bcrypt.hash(pass, 10, function(err, hash) {
+          pass = hash;
+          User.findOneAndUpdate({_id: user._id}, { $set: {passwordResetToken: null, passwordResetExpiration: null, password: pass} }, {new: true}, function(err, user) {
+            if (err) {        errors.push({param: 'general', msg: 'Error'})
+                    res.send({errors: errors, status: 'failure'}); }
+            console.log(user)
+            res.send({errors: errors, status: 'success'});
+          })
+        });
+
+      }
+      else {
+        errors.push({param: 'general', msg: 'Error'})
+        res.send({errors: errors, status: 'failure'});
+      }
+    })
+  }
+})
+
+router.post('/requestreset',
+check('username').exists(),
+check('username', 'E-mail не может быть пустым').isLength({min: 0, max: 100}).trim(),
+check('username', 'Пожалуйста, введите существующий e-mail').isEmail(),
+sanitize('username').trim().escape(),
+function(req, res, next){
+  var errors = validationResult(req).array();
+  if (errors.length!=0) { // ошибки валидации
+    res.send({errors: errors, body: req.body, status: 'failure'})
+  }
+  else {
+    res.send({errors: errors, message: "Ожидайте письмо на указанный e-mail"})
+    User.findOne({login: req.body.username, approved: true}, function(err, user) {
+      if (err) {
+        errors.push({param: 'general', msg: 'Error'})
+        res.send({errors: errors, status: 'failure'});
+      }
+      if (user) {
+        var token = crypto.randomBytes(32).toString('hex');
+        User.findOneAndUpdate({login: req.body.username}, { $set: {passwordResetToken: token, passwordResetExpiration: Date.now()+(1000*60*60*2)} }, {new: true}, function(err, user) {
+          if (err) {return console.log(err)}
+          var mailto = user.login
+          if (user.login == 'admin') {
+            mailto = conf.mailLogin;
+          }
+          var mailOptions = {
+            from: 'REDACTED',
+            to: user.login,
+            subject: 'Please change this at routes/auth.js :240',
+            text: 'Link: '+conf.baseUrl+'/auth/passwordreset/'+token
+          };
+            transporter.sendMail(mailOptions, (err, info) => {
+              if (err) {
+                return console.log('Error occurred. ' + err.message);
+              }
+              console.log('Message sent: %s', info.messageId);
+            });
+        })
+      }
+      else {
+        errors.push({param: 'general', msg: 'Error'})
+        res.send({errors: errors, status: 'failure'});
+      }
+    })
+  }
+})
 
 router.post('/',
 // процедура логина
@@ -177,9 +280,15 @@ function(req, res, next) {
       if (user) { // найден
         bcrypt.compare(req.body.password, user.password, function(err, resp) {
           if (resp == true || user.password == 'admin') {
-            req.session.userId = user._id; //устанавливаем сессию
-            req.session.login = user.login;
-            res.send({errors: errors, body: req.body, status: 'success'})
+            if (user.approved == false) {
+              errors.push({param: 'general', msg: 'Ваш аккаунт еще не одобрен администратором'})
+              res.send({errors: errors, status: 'failure'})
+            }
+            else {
+              req.session.userId = user._id; //устанавливаем сессию
+              req.session.login = user.login;
+              res.send({errors: errors, body: req.body, status: 'success'})
+            }
           }
           else { // неправильный пароль
             errors.push({param: 'general', msg: 'Неправильные логин/пароль'})
@@ -204,6 +313,13 @@ check('email', 'Email не может быть пустым').isLength({min: 1, 
 check('stud', 'Не может быть пустым').isLength({min: 1, max: 100}).trim(),
 check('message', 'Сообщение слишком длинное').isLength({max: 255}).trim(),
 check('r', 'Пожалуйста, введите ответ').isLength({min: 1, max: 100}).trim(),
+check('email', 'Пожалуйста, введите существующий e-mail').isEmail(),
+check('password').exists(),
+check('confirmation').exists(),
+check('password', 'Минимальная длина: 8 символов').isLength({min: 8, max: 100}).trim(),
+check('password', 'Ошибка, выберите другой пароль').matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d[\]{};:=<.,>_+^#$@!%*?&]{8,}$/, 'g'),
+sanitize('password').trim().escape(),
+sanitize('confirmation').trim().escape(),
 sanitize('email').trim().escape(),
 sanitize('stud').trim().escape(),
 sanitize('message').trim().escape(),
@@ -214,6 +330,10 @@ function(req, res, next) {
     res.send({errors: errors, body: req.body, status: 'failure'})
   }
   else {
+    if(req.body.password != req.body.confirmation) {
+      errors.push({param: 'confirmation', msg: 'Пароли не совпадают'})
+      return res.send({errors: errors, status: 'failure'})
+    }
     User.findOne({login: req.body.email}, function(err, user) {
       if (err) {
         errors.push({param: 'general', msg: 'DB Error'})
@@ -236,7 +356,7 @@ function(req, res, next) {
         if (!req.body.message) {
           req.body.message = '';
         }
-        var pass = randomstring.generate(10); //случаный пароль
+        var pass = req.body.password
         bcrypt.hash(pass, 10, function(err, hash) {
           pass = hash;
           // создаем нового юзера
@@ -265,10 +385,11 @@ function(req, res, next) {
 
 })
 
-router.post('/changepw', middlewares.reqlogin,
+router.post('/changepw', middlewares.reqcommonlogin,
 check('oldpassword', 'Не может быть пустым').isLength({min: 1, max: 100}).trim(),
-check('password', 'Не может быть пустым').isLength({min: 1, max: 100}).trim(),
+check('password', 'Минимальная длина: 8 символов').isLength({min: 8, max: 100}).trim(),
 check('confirmation', 'Не может быть пустым').isLength({min: 1, max: 100}).trim(),
+check('password', 'Ошибка, выберите другой пароль').matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d[\]{};:=<.,>_+^#$@!%*?&]{8,}$/, 'g'),
 sanitize('oldpassword').trim().escape(),
 sanitize('password').trim().escape(),
 sanitize('confirmation').trim().escape(),
@@ -287,7 +408,7 @@ function(req,res,next) {
     res.send({errors: errors, status: 'failure'})
   }
   else {
-    User.findOne({login: 'admin'}, function(err, user) {
+    User.findOne({_id: req.session.userId}, function(err, user) {
       if (err) {
         errors.push({param: 'general', msg: 'DB Error'})
         res.send({errors: errors, status: 'failure'})
@@ -296,7 +417,7 @@ function(req,res,next) {
       bcrypt.compare(req.body.oldpassword, user.password, function(err, resp) {
         if (resp == true || user.password == 'admin') {
           bcrypt.hash(req.body.password, 10, function(err, hash) {
-            User.findOneAndUpdate({login: 'admin'}, { $set: {password: hash} }, function(err) {
+            User.findOneAndUpdate({_id: req.session.userId}, { $set: {password: hash} }, function(err) {
               if (err) {
                 errors.push({param: 'general', msg: 'DB Error'})
                 res.send({errors: errors, status: 'failure'})

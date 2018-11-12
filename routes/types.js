@@ -13,7 +13,7 @@ router.get('/', middlewares.reqlogin, function(req, res, next) {
   Type.find()
   .exec(function(err, list_types) {
     if (err) { return console.log(err); }
-      res.render('types_list', {userid: req.session.userId, types_list: list_types});
+      res.render('types_list', {title: 'Типы документов', userid: req.session.userId, login: req.session.login, types_list: list_types});
   })
 
 });
@@ -23,7 +23,7 @@ router.get('/edit/:id', middlewares.reqlogin, function(req, res) {
   Type.findById(req.params.id)
   .exec(function(err, type_data) {
     if (err) {console.log (err);}
-    res.render('newtype_form', {userid: req.session.userId, type: type_data, header: "Редактирование типа", request_url: '/types/edit/'+type_data._id});
+    res.render('newtype_form', {title: 'Редактирование типа', userid: req.session.userId, login: req.session.login, type: type_data, header: "Редактирование типа", request_url: '/types/edit/'+type_data._id});
   })
 })
 

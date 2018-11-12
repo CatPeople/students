@@ -413,3 +413,34 @@ table {
   left: 10px;
   color:#333;
 }
+
+#result {
+  max-width: 300px;
+}
+
+.short{
+font-weight:bold;
+color:#FF0000;
+}
+
+.weak{
+font-weight:bold;
+color:orange;
+}
+
+.passwordgood, .confirmationgood{
+  display: none;
+  margin-left: 5px;
+  font-weight:bold;
+  color:#2D98F3;
+}
+
+#login {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+#passwordresetlink:after {
+  content:"\000A";
+  white-space: pre;
+}

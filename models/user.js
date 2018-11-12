@@ -8,9 +8,9 @@ var UserSchema = new Schema({
   password: {type: String, required: true},
   stud: {type: String},
   message: {type: String},
-  approved: {type: Boolean}
+  approved: {type: Boolean},
+  passwordResetToken: {type: String},
+  passwordResetExpiration: {type: Date}
 })
 
 module.exports = mongoose.model('User', UserSchema)
-
-// old world - classic vanilla wow

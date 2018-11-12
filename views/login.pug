@@ -2,8 +2,9 @@ extends layout
 
 block head
   script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  script(src='/javascripts/passwordcheck.js')
   if userid
-    if userid == "5aaad9cef86881299850be7b"
+    if login == "admin"
       script(src='/javascripts/adminpanel.js')
     else
       script(src='/javascripts/login.js')
@@ -17,33 +18,37 @@ block content
       b Вы вошли как #{login}
     div
       button#logout(type='button') Выйти
-    if userid == "5aaad9cef86881299850be7b"
-      h3(style='margin-bottom: 0') Сменить пароль
-      form.pure-form.pure-form-stacked(method='POST' action='' data-request_url='/auth/changepw')
-        span.error()
-        div.fields-container
-          div.field
-            label(for='oldpassword') Старый пароль
-            input#oldpassword(type='password' autocomplete='off' placeholder='' name='oldpassword')
-            span.error()
-          div.field
-            label(for='password') Пароль
-            input#password(type='password' autocomplete='off' placeholder='' name='password')
-            span.error()
-          div.field
-            label(for='confirmation') Подтверждение
-            input#confirmation(type='password' autocomplete='off' placeholder='' name='confirmation')
-            span.error()
-        button.pure-button.pure-button-primary#form_submit(type='submit') Отправить
+    h3(style='margin-bottom: 0') Сменить пароль
+    form.pure-form.pure-form-stacked(method='POST' action='' data-request_url='/auth/changepw')
+      span.error()
+      div.fields-container
+        div.field
+          label(for='oldpassword') Старый пароль
+          input#oldpassword(type='password' autocomplete='off' placeholder='' name='oldpassword')
+          span.error()
+        div.field
+          label(for='password') Пароль
+          input#password(type='password' style='display: inline-block' autocomplete='off' placeholder='' name='password')
+          span.passwordgood ✓
+          div#result()
+          span.error()
+        div.field
+          label(for='confirmation') Подтверждение
+          input#confirmation(type='password' style='display: inline-block' autocomplete='off' placeholder='' name='confirmation')
+          span.confirmationgood ✓
+          span.error()
+      button.pure-button.pure-button-primary#form_submit(type='submit') Отправить
   else    
     a(href='/auth/registration')
       |  Регистрация
     form.pure-form.pure-form-stacked(method='POST' action='' data-request_url=request_url)
       span.error()
+      span.success()
       div.fields-container
         div.field
           label(for='username') E-mail: 
           input#login(type='text', autocomplete='off' placeholder='E-mail' name='username')
+          a#passwordresetlink(href="#") Забыли пароль
           span.error()
         div.field
           label(for='password') Пароль: 

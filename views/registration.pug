@@ -3,6 +3,7 @@ extends layout
 block head
   script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
   script(src='/javascripts/registration.js')
+  script(src='/javascripts/passwordcheck.js')
 
 block content
   h1 Регистрация
@@ -16,9 +17,20 @@ block content
       span.error()
       div.fields-container
         div.field
-          label(for='email') E-mail, на который будет выслан пароль
+          label(for='email') E-mail
           input#email(type='email' autocomplete='off' placeholder='Email' name='email')
           span.error()
+        div.field
+          label(for='password') Пароль
+          input#password(style='display: inline-block' type='password' autocomplete='off' placeholder='' name='password')
+          span.passwordgood ✓
+          div#result()
+          span.error()
+        div.field
+          label(for='confirmation') Подтверждение
+          input#confirmation(style='display: inline-block' type='password' autocomplete='off' placeholder='' name='confirmation')
+          span.confirmationgood ✓
+          div.error()
         div.field
           label(for='stud') Номер студенческого
           input#stud(type='text' autocomplete='off' placeholder='Номер студенческого' name='stud')

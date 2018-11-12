@@ -1,7 +1,7 @@
 module.exports = {
   // функции использующиеся для запросов, требующих логина
   reqlogin: function (req, res, next) { // требует логина под админом
-    if (req.session && req.session.userId == "5aaad9cef86881299850be7b") {
+    if (req.session && req.session.login == "admin") {
       return next();
     } else {
       var err = new Error('Unauthorized.');

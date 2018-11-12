@@ -33,7 +33,7 @@ app.use((req, res, next) => {
 })
 // Подключение к базе
 app.use(fileUpload());
-var dbURI = "URI"
+var dbURI = ""
 
 var db = mongoose.connection;
 db.on('connecting', function() {
@@ -49,6 +49,18 @@ db.on('connected', function() {
 });
 db.once('open', function() {
     console.log('connection open');
+    User.findOne({login: 'admin'}, function(err, user) {
+      if (err) return console.log(err)
+      if (!user) {
+        var admin = new User({
+          login: 'admin',
+          password: 'admin',
+          approved: true});
+        admin.save(function(err) {
+          if(err) console.log(err);
+        })
+      }
+    })
 });
 db.on('reconnected', function () {
     console.log('reconnected');
@@ -61,8 +73,8 @@ db.on('disconnected', function() {
 console.log('dbURI is: '+dbURI);
 mongoose.connect(dbURI, {auto_reconnect:true, keepAlive: 1, connectTimeoutMS: 30000, reconnectTries: Number.MAX_VALUE } );
 
-// Скрипт, выпускающий студентов 1 августа
-var j = schedule.scheduleJob('42 10 1 8 *', function(){
+
+var j = schedule.scheduleJob('42 10 * * *', function(){
   Student.find()
   .exec(function(err, students) {
     async.eachSeries(students, function updateObject (obj, done) {
