@@ -103,8 +103,6 @@ function(req, res, next) {
       }
       // создаем письмо
 
-      var passw = randomstring.generate(10);
-      bcrypt.hash(passw, 10, function(err, hash) {
         var mailOptions = {
           from: 'REDACTED',
           to: user.login,
@@ -118,12 +116,8 @@ function(req, res, next) {
             }
 
             res.send({status: 'success'});
-            User.findOneAndUpdate({'login': req.body.email}, {'password': hash}, function(err, user) {
-              if (err) {return console.log(err)}
-            })
             console.log('Message sent: %s', info.messageId);
           });
-      });
 })
 }
 else
