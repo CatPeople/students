@@ -1,5 +1,6 @@
 {
   "mailLogin": "",
   "sessionSecret": "",
+  "dbURI": "",
   "baseUrl": "http://localhost:3000"
 }

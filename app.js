@@ -33,7 +33,7 @@ app.use((req, res, next) => {
 })
 // Подключение к базе
 app.use(fileUpload());
-var dbURI = ""
+var dbURI = conf.dbURI;
 
 var db = mongoose.connection;
 db.on('connecting', function() {
