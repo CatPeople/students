@@ -104,7 +104,7 @@ function(req, res, next) {
       // создаем письмо
 
         var mailOptions = {
-          from: 'REDACTED',
+          from: conf.mailLogin,
           to: user.login,
           subject: 'Please change this at routes/auth.js :111',
           text: 'Approved!'
@@ -228,7 +228,7 @@ function(req, res, next){
             mailto = conf.mailLogin;
           }
           var mailOptions = {
-            from: 'REDACTED',
+            from: conf.mailLogin,
             to: user.login,
             subject: 'Please change this at routes/auth.js :240',
             text: 'Link: '+conf.baseUrl+'/auth/passwordreset/'+token
