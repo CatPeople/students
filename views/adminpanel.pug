@@ -3,6 +3,7 @@ extends layout
 block head
   script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
   script(src='/javascripts/adminpanel.js')
+  script(src='/javascripts/passwordcheck.js')
 
 block content
   h1 Информация
@@ -20,11 +21,14 @@ block content
       div.fields-container
         div.field
           label(for='password') Пароль
-          input#password(type='password' autocomplete='off' placeholder='' name='password')
+          input#password(type='password' style='display: inline-block' autocomplete='off' placeholder='' name='password')
+          span.passwordgood ✓
+          div#result()
           span.error()
         div.field
           label(for='confirmation') Подтверждение
-          input#confirmation(type='password' autocomplete='off' placeholder='' name='confirmation')
+          input#confirmation(type='password' style='display: inline-block' autocomplete='off' placeholder='' name='confirmation')
+          span.confirmationgood ✓
           span.error()
         input#oldpassword(type='hidden' name='oldpassword' value='admin')
       button.pure-button.pure-button-primary#form_submit(type='submit') Отправить
