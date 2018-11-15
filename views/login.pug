@@ -47,11 +47,11 @@ block content
       div.fields-container
         div.field
           label(for='username') E-mail: 
-          input#login(type='text', autocomplete='off' placeholder='E-mail' name='username')
-          a#passwordresetlink(href="#") Забыли пароль
+          input#login(type='text', autocomplete='off' placeholder='E-mail' name='username' tabindex='1')
+          a#passwordresetlink(href="#" tabindex='3') Забыли пароль
           span.error()
         div.field
           label(for='password') Пароль: 
-          input#password(type='password' autocomplete='off' placeholder='Пароль' name='password')
+          input#password(type='password' autocomplete='off' placeholder='Пароль' name='password' tabindex='1')
           span.error()
-      button.pure-button.pure-button-primary#form_submit(type='submit') Войти
+      button.pure-button.pure-button-primary#form_submit(type='submit' tabindex='2') Войти
