@@ -107,8 +107,8 @@ ul.types-list li {
   padding-bottom: 5px;
 }
 
-#searchname {
-  margin-left: 5px;
+#select-group {
+  margin-right: 5px;
 }
 
 .decline {
@@ -443,4 +443,24 @@ color:orange;
 #passwordresetlink:after {
   content:"\000A";
   white-space: pre;
+}
+
+
+@media only screen and (max-width: 480px) {
+    /* For mobile phones: */
+    body {
+      padding: 10px;
+    }
+
+    .ratingL {
+      display: none;
+    }
+
+    .scopeL {
+      display: none;
+    }
+
+    .student-list-group-cell {
+      white-space: nowrap;
+    }
 }

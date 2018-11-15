@@ -4,9 +4,9 @@ tbody.documentbody
           a.student-document-more-link(href='javascript:void(0)')
             i.far.fa-file-alt(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
             span.student-document-more-link-text !{document.type}
-        td
+        td.ratingL
           span #{document.rating} балл#{document.ruPluralize}
-        td
+        td.scopeL
           span #{document.scope.name}
         td.editdelete
           a.document-edit-link(href='javascript:void(0)' data-url='/student/editdocument/'+document._id)
