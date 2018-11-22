@@ -1,0 +1,15 @@
+extends layout
+
+block head
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  script(src='/javascripts/adminpanel.js')
+  script(src='/javascripts/resizeinput.js')
+
+block content
+  h3 Сферы деятельности
+  form.pure-form
+    input#scopesInput(type='text' name='scopes' autocomplete='off' style='min-width:50px!important; max-width:99.99%!important;' value=freshScopes)
+    button.pure-button.pure-button-primary(type='submit') Отправить
+    span.error
+  div
+  a(href="/adminpanel" style="display: inline-block; margin-top: 10px; padding-top: 5px; border-top: 1px dashed #999") <- Назад

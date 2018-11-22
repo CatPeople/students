@@ -1,6 +1,13 @@
 {
-  "mailLogin": "",
-  "sessionSecret": "",
-  "dbURI": "",
-  "baseUrl": "http://localhost:3000"
+    "mailLogin": "",
+    "sessionSecret": "",
+    "dbURI": "",
+    "baseUrl": "http://localhost:3000",
+    "scopes": [
+        "Научно-исследовательская",
+        "Учебная",
+        "Общественная",
+        "Спортивная",
+        "Культурно-творческая"
+    ]
 }

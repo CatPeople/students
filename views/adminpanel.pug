@@ -37,4 +37,5 @@ block content
   div.wrapper
     - var prwidth = Math.round((driveusage / 16106127360) * 100)
     div.progress-bar-fill(style="width: "+prwidth+"%;")
-    span.progress-bar-label #{filesize(driveusage)} / 15GB
+    span.progress-bar-label #{filesize(driveusage)} / 15GB 
+  a(href="/adminpanel/config" style="display: inline-block; margin-top: 10px; padding-top: 5px; border-top: 1px dashed #999") Дополнительная конфигурация

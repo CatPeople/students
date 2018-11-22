@@ -11,7 +11,7 @@ const { check, validationResult } = require('express-validator/check');
 const { matchedData, sanitize } = require('express-validator/filter');
 
 const fs = require('fs');
-
+var configtools = require("./configtools.js")
 
 
 
@@ -147,6 +147,26 @@ router.get('/adminpanel', middlewares.reqlogin, function(req, res, next) {
     })
 
 });
+
+router.get('/adminpanel/config', middlewares.reqlogin, function(req, res, next) {
+  fs.readFile(appRoot+'/config.json', function(err, data) {
+    if (err) {console.log(err); process.exit(1);}
+    configread = JSON.parse(data)
+    var freshScopes = configread.scopes.slice(0);
+    res.render('config', {title: 'Дополнительная конфигурация', freshScopes: freshScopes.join(', ')})
+  })
+})
+
+router.post('/adminpanel/config', middlewares.reqlogin,
+check('scopes', 'Поле не может быть пустым').isLength({min: 1, max: 1000}).trim(),
+sanitize('scopes').trim().escape(),
+function(req, res, next) {
+  var errors = validationResult(req).array();
+  var arr = req.body.scopes.split(',')
+  var trimmed = arr.map(val => val.trim())
+  configtools.writeNew(trimmed);
+  res.send({errors: errors})
+})
 
 router.get('/newtype', middlewares.reqlogin, function(req, res) {
   res.render('newtype_form', {title: 'Создать новый тип документа', userid: req.session.userId, login: req.session.login, header: "Создать новый тип документа", request_url: "/newtype"});

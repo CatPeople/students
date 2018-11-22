@@ -23,7 +23,7 @@ const path = require('path');
 const { check, validationResult } = require('express-validator/check');
 const { matchedData, sanitize } = require('express-validator/filter');
 
-var scopeslist_local;
+global.scopeslist_local = null;
 
 
 documentmodels.Scope.find()

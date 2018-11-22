@@ -24,7 +24,9 @@ var User = require('./models/user')
 var documentmodels = require('./models/document')
 
 var conf = require('./config');
+var configtools = require("./routes/configtools.js")
 
+global.appRoot = path.resolve(__dirname);
 
 var app = express();
 app.use((req, res, next) => {
@@ -61,6 +63,7 @@ db.once('open', function() {
         })
       }
     })
+    configtools.refreshScopes();
 });
 db.on('reconnected', function () {
     console.log('reconnected');
