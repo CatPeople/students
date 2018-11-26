@@ -178,7 +178,6 @@ $(document).ready(function(){
             $('.student-data-group').html(response.body.group)
             $('.student-data-degree').html(response.degree)
             $('.student-data-year').html(response.year)
-            $('.student-test-grad').html(response.testgrad)
             $('#student-form-cancel').trigger('click')
           }
         })

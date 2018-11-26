@@ -449,11 +449,6 @@ color:orange;
   white-space: pre;
 }
 
-.student-test-grad {
-  color: #db8e00;
-  font-weight: bold;
-}
-
 @media only screen and (max-width: 480px) {
     /* For mobile phones: */
     body {

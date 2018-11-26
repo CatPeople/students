@@ -41,8 +41,6 @@ StudentSchema.virtual('degree').get(function () {
 });
 
 StudentSchema.virtual('year').get(function () {
-  //var ayyyear = new Date().getFullYear()+6;
-  //var currentyear = ayyyear.toString().substr(-1);
   var currentyear = new Date().getFullYear().toString().substr(-1);
   var currentmonth = new Date().getMonth();
   var genesisyear = this.group.name.charAt(4);
@@ -50,27 +48,33 @@ StudentSchema.virtual('year').get(function () {
   if (yearofstudying < 0) {yearofstudying+=10}
   if (currentmonth >= 7) {yearofstudying++}
   if (this.graduated != true) {
-  switch(this.group.name.charAt(2)) {
-    case 'С':
-      if (yearofstudying>6)
-      {
-        return 'Выпустился'}
-      break;
-    case 'Б':
-      if (yearofstudying>4)
-      {
-        return 'Выпустился'}
-      break;
-    case 'М':
-      if (yearofstudying>2)
-      {
-        return 'Выпустился'}
-      break;
-  }
-  if (yearofstudying == 0) {
+    if (new Date() > this.graduationDay) {
+      module.exports.findOneAndUpdate({_id: this._id}, { $set : { graduated: true }}, {new: true}, function(err) {
+        if (err) console.log(err)
+      })
+      return 'Выпустился'
+    }
+    switch(this.group.name.charAt(2)) {
+      case 'С':
+        if (yearofstudying>6)
+        {
+          return 'Выпустился'}
+        break;
+      case 'Б':
+        if (yearofstudying>4)
+        {
+          return 'Выпустился'}
+        break;
+      case 'М':
+        if (yearofstudying>2)
+        {
+          return 'Выпустился'}
+        break;
+    }
+    if (yearofstudying == 0) {
 
-    return 'Выпустился'
-  }
+      return 'Выпустился'
+    }
   }
   else {return 'Выпустился'}
   return yearofstudying.toString();
@@ -89,10 +93,6 @@ StudentSchema.pre('save', function(next) {
   if (yearofstudying < 0) {yearofstudying+=10}
   if (currentmonth >= 7) {yearofstudying++}
   if (this.graduated != true) {
-    if (this.year == 'Выпустился') {
-        this.graduationDay = new Date(0);
-    }
-    else {
       var ayear = new Date().getFullYear();
       switch(this.group.name.charAt(2)) {
           case 'С':
@@ -105,12 +105,13 @@ StudentSchema.pre('save', function(next) {
             this.graduationDay = new Date(ayear+3-yearofstudying, 7, 1)
             break;
         }
-      }
+        if (this.year == 'Выпустился') {
+            this.graduationDay = new Date(0);
+        }
     }
     else {
       this.graduationDay = new Date(0);
     }
-  console.log(this)
   next();
 });
 

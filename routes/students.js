@@ -591,7 +591,7 @@ router.post('/editstudent/:id', middlewares.reqlogin, [
             res.send({errors: errors, status: 'failure'})
             return console.log(err);
           }
-          res.send({body: req.body, degree: stud.degree, year: stud.year, testgrad: stud.graduationDay.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'}), errors: errors, status: 'success'})
+          res.send({body: req.body, degree: stud.degree, year: stud.year, errors: errors, status: 'success'})
         })
       })
     }
