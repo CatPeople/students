@@ -581,17 +581,19 @@ router.post('/editstudent/:id', middlewares.reqlogin, [
       // объект с новыми именами
       var newname = {firstName: req.body.firstname, lastName: req.body.lastname, patronymic: req.body.patronymic}
       // ищем студента по айди и обновляем объект имени, группу, выпустился/невыпустился
-      Student.findByIdAndUpdate(req.params.id, { $set: { name: newname, 'group.name': req.body.group, graduated: graduated } }, {new: true}) // new: true значит, что функция вернет обратно уже обновленного студента
-      .exec(function(err, student) {
-        if (err){
-          errors.push({param: 'general', msg: 'DB Error'})
-          res.send({errors: errors, status: 'failure'})
-          return console.log(err);
-        }
-        // отправляем клиенту новый год обучения, степень и прочее
-        res.send({body: req.body, degree: student.degree, year: student.year, errors: errors, status: 'success'})
+      Student.findOne({_id: req.params.id}, function(err, student) {
+        student.name = newname
+        student.group.name = req.body.group
+        student.graduated = graduated
+        student.save(function(err, stud) {
+          if (err){
+            errors.push({param: 'general', msg: 'DB Error'})
+            res.send({errors: errors, status: 'failure'})
+            return console.log(err);
+          }
+          res.send({body: req.body, degree: stud.degree, year: stud.year, testgrad: stud.graduationDay.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'}), errors: errors, status: 'success'})
+        })
       })
-
     }
 }])
 

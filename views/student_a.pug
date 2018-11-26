@@ -17,9 +17,9 @@ block content
     a#student-name-edit-link(href='javascript:void(0)' data-url='/student/editname/'+student._id)
       i.fas.fa-pencil-alt(style="font-size: 20px; color: green; margin-left: 5px;")
     span.glass(style='display: none')
-      i.fas.fa-glass-martini.fa-spin(style="font-size: 20px; color: red; margin-left: 5px;")
+      i.fas.fa-asterisk.fa-spin(style="font-size: 20px; color: red; margin-left: 5px;")
   div.student-data-container
-    a(href='/student/printable/'+student._id+'.pdf')
+    a(href='/student/printable/'+student._id+'.pdf' target="_blank")
       i.far.fa-file-pdf(style="font-size: 20px; margin-right: 5px;")
       | Сохранить в PDF
     div.student-data
@@ -29,6 +29,9 @@ block content
         span.student-data-degree !{student.degree}
       p Год обучения: 
         span.student-data-year !{student.year}
+      if student.graduationDay
+        p Год выпуска: 
+          span.student-test-grad !{student.graduationDay.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'})}
   div.student-ratings
     include includes/ratings-display.pug
   div.student-documents(data-id=student._id)

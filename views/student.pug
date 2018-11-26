@@ -9,7 +9,7 @@ block content
   h1(style='margin-bottom: 10px;' data-firstname=student.name.firstName data-lastname=student.name.lastName data-patronymic=student.name.patronymic data-group=student.group.name data-id=student._id) 
     span.student-fullname #{student.fullName}
   div.student-data-container
-    a(href='/student/printable/'+student._id+'.pdf')
+    a(href='/student/printable/'+student._id+'.pdf' target="_blank")
       i.far.fa-file-pdf(style="font-size: 20px; margin-right: 5px;")
       | Сохранить в PDF
     div.student-data

@@ -6,30 +6,30 @@ block head
 
 block content
   h1 Создать студента
-  form(method='POST' action='' data-request_url=request_url)
+  form.pure-form(method='POST' action='' data-request_url=request_url)
     span.error()
     div.fields-container
       div.field
-        label(for='lastname') Фамилия: 
-        br
+        p
+          label(for='lastname') Фамилия: 
         input(type='text', autocomplete='off' placeholder='' name='lastname')
         span.error()
       div.field
-        label(for='firstname') Имя: 
-        br
+        p
+          label(for='firstname') Имя: 
         input(type='text', autocomplete='off' placeholder='' name='firstname')
         span.error()
       div.field
-        label(for='patronymic') Отчество: 
-        br
+        p
+          label(for='patronymic') Отчество: 
         input(type='text', autocomplete='off' placeholder='' name='patronymic')
         span.error()
       div.field
-        label(for='group') Группа: 
-        br
+        p
+          label(for='group') Группа: 
         input(type='text', autocomplete='off' placeholder='' name='group')
         span.error()
-    button#form_submit(type='submit' tabindex='4') Подтвердить
+    button.pure-button.pure-button-primary#form_submit(type='submit' tabindex='4') Подтвердить
 
   if errors 
     ul

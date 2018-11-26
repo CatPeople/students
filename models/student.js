@@ -15,7 +15,8 @@ var StudentSchema = new mongoose.Schema({
   },
   documents: [{type: mongoose.Schema.Types.ObjectId, ref: 'Document'}],
   ratings: [{type: mongoose.Schema.Types.ObjectId, ref: 'Rating'}],
-  graduated: Boolean
+  graduated: Boolean,
+  graduationDay: Date
 })
 StudentSchema.plugin(mongoosePaginate);
 StudentSchema.virtual('fullName').get(function () {
@@ -80,5 +81,37 @@ StudentSchema.virtual('url').get(function () {
 });
 
 
+StudentSchema.pre('save', function(next) {
+  var currentyear = new Date().getFullYear().toString().substr(-1);
+  var currentmonth = new Date().getMonth();
+  var genesisyear = this.group.name.charAt(4);
+  var yearofstudying = parseInt(currentyear)-parseInt(genesisyear);
+  if (yearofstudying < 0) {yearofstudying+=10}
+  if (currentmonth >= 7) {yearofstudying++}
+  if (this.graduated != true) {
+    if (this.year == 'Выпустился') {
+        this.graduationDay = new Date(0);
+    }
+    else {
+      var ayear = new Date().getFullYear();
+      switch(this.group.name.charAt(2)) {
+          case 'С':
+            this.graduationDay = new Date(ayear+7-yearofstudying, 7, 1)
+            break;
+          case 'Б':
+            this.graduationDay = new Date(ayear+5-yearofstudying, 7, 1)
+            break;
+          case 'М':
+            this.graduationDay = new Date(ayear+3-yearofstudying, 7, 1)
+            break;
+        }
+      }
+    }
+    else {
+      this.graduationDay = new Date(0);
+    }
+  console.log(this)
+  next();
+});
 
 module.exports = mongoose.model('Student', StudentSchema)

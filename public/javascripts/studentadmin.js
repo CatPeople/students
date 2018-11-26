@@ -135,7 +135,7 @@ $(document).ready(function(){
         "<div class='student-form-field'>Отчество: <input type='text' autocomplete='off' name='patronymic' value='"+$(this).parent().data('patronymic')+"'> <span class='error'></span></div>"+
         "<div class='student-form-field'>Группа: <input type='text' autocomplete='off' name='group' value='"+$(this).parent().data('group')+"'> <span class='error'></span></div>"+
         "<div class='student-form-field'>Выпустился: <input type='checkbox' id='graduatedcheckbox' name='graduated' value='true' "+(($('.student-data-year').html() == 'Выпустился') ? 'checked' : '')+"></div>"+
-        "<button class='pure-button pure-button-primary' id='submit-student-form' type='button'>Подтвердить</button><button type='button' id='student-form-cancel'>Отмена</button></form>").appendTo($('.student-data-container'))
+        "<button class='pure-button pure-button-primary' id='submit-student-form' type='button'>Подтвердить</button><button class='pure-button' type='button' id='student-form-cancel'>Отмена</button></form>").appendTo($('.student-data-container'))
       })
       $('body').on('click', '#student-form-cancel', function() { // клик по отмене
         $('#student-form').remove();
@@ -178,6 +178,7 @@ $(document).ready(function(){
             $('.student-data-group').html(response.body.group)
             $('.student-data-degree').html(response.degree)
             $('.student-data-year').html(response.year)
+            $('.student-test-grad').html(response.testgrad)
             $('#student-form-cancel').trigger('click')
           }
         })
