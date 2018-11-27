@@ -16,8 +16,6 @@ var randomstring = require("randomstring");
 var faker = require('faker');
 const fileUpload = require('express-fileupload');
 var async = require("async");
-var schedule = require('node-schedule');
-
 
 var Student = require('./models/student')
 var User = require('./models/user')
@@ -75,21 +73,6 @@ db.on('disconnected', function() {
   });
 console.log('dbURI is: '+dbURI);
 mongoose.connect(dbURI, {auto_reconnect:true, keepAlive: 1, connectTimeoutMS: 30000, reconnectTries: Number.MAX_VALUE } );
-
-
-var j = schedule.scheduleJob('42 10 * * *', function(){
-  Student.find()
-  .exec(function(err, students) {
-    async.eachSeries(students, function updateObject (obj, done) {
-      if (obj.year == 'Выпустился')
-      Student.update({ _id: obj._id }, { $set : { graduated: true }}, done);
-      else done()
-    }, function allDone (err) {
-        console.log('all done')
-    });
-  })
-
-});
 
 
 
