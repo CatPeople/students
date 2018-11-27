@@ -15,7 +15,6 @@ var StudentSchema = new mongoose.Schema({
   },
   documents: [{type: mongoose.Schema.Types.ObjectId, ref: 'Document'}],
   ratings: [{type: mongoose.Schema.Types.ObjectId, ref: 'Rating'}],
-  graduated: Boolean,
   graduationDay: Date
 })
 StudentSchema.plugin(mongoosePaginate);
@@ -47,11 +46,7 @@ StudentSchema.virtual('year').get(function () {
   var yearofstudying = parseInt(currentyear)-parseInt(genesisyear);
   if (yearofstudying < 0) {yearofstudying+=10}
   if (currentmonth >= 7) {yearofstudying++}
-  if (this.graduated != true) {
     if (new Date() > this.graduationDay) {
-      module.exports.findOneAndUpdate({_id: this._id}, { $set : { graduated: true }}, {new: true}, function(err) {
-        if (err) console.log(err)
-      })
       return 'Выпустился'
     }
     switch(this.group.name.charAt(2)) {
@@ -72,11 +67,8 @@ StudentSchema.virtual('year').get(function () {
         break;
     }
     if (yearofstudying == 0) {
-
       return 'Выпустился'
     }
-  }
-  else {return 'Выпустился'}
   return yearofstudying.toString();
 });
 
@@ -92,7 +84,7 @@ StudentSchema.pre('save', function(next) {
   var yearofstudying = parseInt(currentyear)-parseInt(genesisyear);
   if (yearofstudying < 0) {yearofstudying+=10}
   if (currentmonth >= 7) {yearofstudying++}
-  if (this.graduated != true) {
+  if (!this.graduationDay) {
       var ayear = new Date().getFullYear();
       switch(this.group.name.charAt(2)) {
           case 'С':

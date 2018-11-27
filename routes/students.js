@@ -576,15 +576,15 @@ router.post('/editstudent/:id', middlewares.reqlogin, [
       res.send({errors: errors, status: 'failure'})
     }
     else {
-      var graduated = false; // по умолчанию студент не выпущен
-      if (req.body.graduated) {graduated = true} // если была отмечена галочка, то выпущен
+      var graduated = null; // по умолчанию студент не выпущен
+      if (req.body.graduated) {graduated = 1} // если была отмечена галочка, то выпущен
       // объект с новыми именами
       var newname = {firstName: req.body.firstname, lastName: req.body.lastname, patronymic: req.body.patronymic}
       // ищем студента по айди и обновляем объект имени, группу, выпустился/невыпустился
       Student.findOne({_id: req.params.id}, function(err, student) {
         student.name = newname
         student.group.name = req.body.group
-        student.graduated = graduated
+        student.graduationDay = graduated
         student.save(function(err, stud) {
           if (err){
             errors.push({param: 'general', msg: 'DB Error'})
