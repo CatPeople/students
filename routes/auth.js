@@ -217,7 +217,7 @@ function(req, res, next){
     User.findOne({login: req.body.username, approved: true}, function(err, user) {
       if (err) {
         errors.push({param: 'general', msg: 'Error'})
-        res.send({errors: errors, status: 'failure'});
+        return res.send({errors: errors, status: 'failure'});
       }
       if (user) {
         var token = crypto.randomBytes(32).toString('hex');
@@ -229,8 +229,8 @@ function(req, res, next){
           }
           var mailOptions = {
             from: conf.mailLogin,
-            to: user.login,
-            subject: 'Please change this at routes/auth.js :240',
+            to: mailto,
+            subject: 'Please change this at routes/auth.js :233',
             text: 'Link: '+conf.baseUrl+'/auth/passwordreset/'+token
           };
             transporter.sendMail(mailOptions, (err, info) => {
@@ -240,10 +240,6 @@ function(req, res, next){
               console.log('Message sent: %s', info.messageId);
             });
         })
-      }
-      else {
-        errors.push({param: 'general', msg: 'Error'})
-        res.send({errors: errors, status: 'failure'});
       }
     })
   }
