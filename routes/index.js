@@ -77,7 +77,7 @@ function(req, res, next) {
         return console.log(err)
       }
       if (students.length == 1) { // найден всего один студент, рендерим его страницу
-        res.render('student', {userid: req.session.userId, student: students[0], login: req.session.login, title: students[0].fullName+' | '+results[0].group.name});
+        res.render('student', {userid: req.session.userId, student: students[0], login: req.session.login, title: students[0].fullName+' | '+students[0].group.name});
       }
       else if (students.length == 0) { // не найдено ни одного, рендерим снова поиск и передаем переменную, что не найдено
         res.render('search', {userid: req.session.userId, nothing: true, login: req.session.login, title: 'Поиск'});
