@@ -98,7 +98,7 @@ function(req, res, next) {
         return console.log(err)
       }
       if (students.length == 1) {
-        res.render('student', {userid: req.session.userId, student: students[0], login: req.session.login, title: students[0].fullName+' | '+results[0].group.name});
+        res.render('student', {userid: req.session.userId, student: students[0], login: req.session.login, title: students[0].fullName+' | '+students[0].group.name});
       }
       else {
         res.render('search_list', {userid: req.session.userId, student_list: students, login: req.session.login, title: 'Поиск'});
