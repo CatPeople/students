@@ -317,16 +317,28 @@ function(req, res, next) {
     res.send({errors: errors, body: req.body, status: 'failure'})
   }
   else {
-    var newstud = new Student({'name.firstName': req.body.firstname, 'name.lastName': req.body.lastname, 'name.patronymic': req.body.patronymic, 'group.name': req.body.group, documents: []})
-    newstud.save(function(err, student) {
+    Student.find({'name.firstName': req.body.firstname, 'name.lastName': req.body.lastname, 'name.patronymic': req.body.patronymic, 'group.name': req.body.group}, function(err, identical) {
       if(err) {
         errors.push({param: 'general', msg: 'DB Error'})
         res.send({errors: errors, status: 'failure'})
         return console.log(err);
       }
-      res.send({errors: errors, body: req.body, status: 'success', id: student._id})
+      if (identical.length > 0) {
+        errors.push({param: 'general', msg: 'Такой студент уже есть в базе'})
+        return res.send({errors: errors, status: 'failure'})
+      }
+      else {
+        var newstud = new Student({'name.firstName': req.body.firstname, 'name.lastName': req.body.lastname, 'name.patronymic': req.body.patronymic, 'group.name': req.body.group, documents: []})
+        newstud.save(function(err, student) {
+          if(err) {
+            errors.push({param: 'general', msg: 'DB Error'})
+            res.send({errors: errors, status: 'failure'})
+            return console.log(err);
+          }
+          res.send({errors: errors, body: req.body, status: 'success', id: student._id})
+        })
+      }
     })
-
   }
 
 });
