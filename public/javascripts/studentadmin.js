@@ -226,7 +226,10 @@ $(document).ready(function(){
             $('.student-data-group').html(response.body.group)
             $('.student-data-degree').html(response.degree)
             $('.student-data-year').html(response.year)
-            $('.student-opt').html(' ('+response.opt+')')
+            if (response.opt)
+              {$('.student-opt').html(' ('+response.opt+')')}
+            else
+              {$('.student-opt').html('')}
             $('#student-form-cancel').trigger('click')
           }
         })
