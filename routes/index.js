@@ -40,7 +40,7 @@ router.post('/search', middlewares.reqcommonlogin,
 check('fullname').exists(),
 check('fullname', 'Не может быть пустым').isLength({min: 1, max: 100}).trim(),
 sanitize('fullname').trim().escape(),
-sanitize('group').trim().escape(),
+sanitize('studid').trim().escape(),
 function(req, res, next) {
   var errors = validationResult(req).array();
   if (req.body.fullname && errors.length==0) {
@@ -64,7 +64,7 @@ function(req, res, next) {
     firstName = '';
   if (!patronymic)
     patronymic = '';
-  if (!req.body.group) // если не была запрошена группа в дополнение к имени
+  if (!req.body.studid)
   {
     // ищем студента где все 3 имени совпадают с полученным из запроса
     Student.find({$and:[{'name.firstName': firstName}, {'name.lastName': lastName}, {'name.patronymic': patronymic}]})
@@ -87,8 +87,8 @@ function(req, res, next) {
       }
     })
   }
-  else { // от клиента получены имя и группа, ищем, дальше то же самое
-    Student.find({$and:[{'name.firstName': firstName}, {'name.lastName': lastName}, {'name.patronymic': patronymic}], 'group.name': req.body.group})
+  else {
+    Student.find({_id: req.body.studid})
     .populate({path: 'documents', populate: {path: 'scope'}}) // заполняем ссылки на документы объектами документов
     .populate({path: 'documents', populate: {path: 'files'}})
     .populate({path: 'ratings', populate: {path: 'scope'}})

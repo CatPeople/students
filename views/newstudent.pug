@@ -12,22 +12,27 @@ block content
       div.field
         p
           label(for='lastname') Фамилия: 
-        input(type='text', autocomplete='off' placeholder='' name='lastname')
+        input#lastNameF(type='text', autocomplete='off' placeholder='' name='lastname')
         span.error()
       div.field
         p
           label(for='firstname') Имя: 
-        input(type='text', autocomplete='off' placeholder='' name='firstname')
+        input#firstNameF(type='text', autocomplete='off' placeholder='' name='firstname')
         span.error()
       div.field
         p
           label(for='patronymic') Отчество: 
-        input(type='text', autocomplete='off' placeholder='' name='patronymic')
+        input#patronymicF(type='text', autocomplete='off' placeholder='' name='patronymic')
         span.error()
       div.field
         p
           label(for='group') Группа: 
-        input(type='text', autocomplete='off' placeholder='' name='group')
+        input#groupF(type='text', autocomplete='off' placeholder='' name='group')
+        span.error()
+      div#optdiv.field
+        p
+          label#opt(for='opt') ()
+        input#optinput(type='text', autocomplete='off' placeholder='' name='opt')
         span.error()
     button.pure-button.pure-button-primary#form_submit(type='submit' tabindex='4') Подтвердить
 

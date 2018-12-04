@@ -7,15 +7,16 @@ block head
 block content
   h1 Поиск
   form(method='POST' action='')
-    input(type='hidden' name='fullname' value=student_list[0].fullName)
-    input#groupinput(type='hidden' name='group' value=null)
+    input#studid(type='hidden' name='studid' value=null)
   div.student-list(data-pages=pagestotal data-page=page)
     ul
       each student in student_list
         li
           div.student-entry
-            a.searchlist-link(href='javascript:void(0)' data-group=student.group.name) 
+            a.searchlist-link(href='javascript:void(0)' data-id=student._id) 
               i.far.fa-user(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
-              | #{student.fullName}
+              | #{student.fullName} 
+              if student.name.opt && student.name.opt != ''
+                | (#{student.name.opt})
             span.student-list-group
               |  !{student.group.name}

@@ -12,8 +12,11 @@ block content
   div.editing-mode
     a#editing-mode-link(href='javascript:void(0)')
       | Режим редактирования
-  h1(style='margin-bottom: 10px;' data-firstname=student.name.firstName data-lastname=student.name.lastName data-patronymic=student.name.patronymic data-group=student.group.name data-id=student._id) 
-    span.student-fullname #{student.fullName}
+  h1(style='margin-bottom: 10px;' data-firstname=student.name.firstName data-lastname=student.name.lastName data-patronymic=student.name.patronymic data-group=student.group.name data-id=student._id data-opt=student.name.opt) 
+    span.student-fullname #{student.fullName} 
+    span.student-opt
+      if student.name.opt && student.name.opt != ''
+        | (#{student.name.opt})
     a#student-name-edit-link(href='javascript:void(0)' data-url='/student/editname/'+student._id)
       i.fas.fa-pencil-alt(style="font-size: 20px; color: green; margin-left: 5px;")
     span.glass(style='display: none')

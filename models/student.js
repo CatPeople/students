@@ -6,7 +6,8 @@ var StudentSchema = new mongoose.Schema({
   name: {
     firstName: String,
     lastName: String,
-    patronymic: String
+    patronymic: String,
+    opt: String
   },
   group: {
     name: String,

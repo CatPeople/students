@@ -44,7 +44,9 @@ block content
                   i.fas.fa-trash-alt(style="font-size: 20px; color: red; margin-left: 5px;")
                 a(href=student.url) 
                   i.far.fa-user(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
-                  | #{student.fullName}
+                  | #{student.fullName} 
+                  if student.name.opt && student.name.opt != ''
+                    | (#{student.name.opt})
               td.student-list-group-cell
                 span.student-list-group
                   |  !{student.group.name}

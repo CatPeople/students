@@ -307,16 +307,20 @@ check('firstname', 'Имя не может быть пустым').isLength({min
 check('lastname', 'Фамилия не может быть пустой').isLength({min: 1, max: 100}).trim(),
 check('patronymic', 'Отчество не может быть пустым').isLength({min: 1, max: 100}).trim(),
 check('group', 'Группа не может быть пустой').isLength({min: 1, max: 100}).trim(),
+check('opt', 'Слишком длинная строка').isLength({min: 0, max: 50}).trim(),
 sanitize('firstname').trim().escape(),
 sanitize('lastname').trim().escape(),
 sanitize('patronymic').trim().escape(),
 sanitize('group').trim().escape(),
+sanitize('opt').trim().escape(),
 function(req, res, next) {
   var errors = validationResult(req).array();
   if (errors.length!=0) {
     res.send({errors: errors, body: req.body, status: 'failure'})
   }
   else {
+    console.log(req.body)
+    var optvalue = null;
     Student.find({'name.firstName': req.body.firstname, 'name.lastName': req.body.lastname, 'name.patronymic': req.body.patronymic, 'group.name': req.body.group}, function(err, identical) {
       if(err) {
         errors.push({param: 'general', msg: 'DB Error'})
@@ -324,20 +328,29 @@ function(req, res, next) {
         return console.log(err);
       }
       if (identical.length > 0) {
-        errors.push({param: 'general', msg: 'Такой студент уже есть в базе'})
-        return res.send({errors: errors, status: 'failure'})
-      }
-      else {
-        var newstud = new Student({'name.firstName': req.body.firstname, 'name.lastName': req.body.lastname, 'name.patronymic': req.body.patronymic, 'group.name': req.body.group, documents: []})
-        newstud.save(function(err, student) {
-          if(err) {
-            errors.push({param: 'general', msg: 'DB Error'})
-            res.send({errors: errors, status: 'failure'})
-            return console.log(err);
+        optvalue = req.body.opt;
+        if (req.body.opt == '') {
+          errors.push({param: 'general', msg: 'Такой студент уже есть в базе, добавлено дополнительное поле', giveopt: true, opt: identical[0].fullName+' (↓↓↓)'})
+          return res.send({errors: errors, status: 'failure'})
+        }
+        else {
+          for (let istudent of identical) {
+            if (req.body.opt == istudent.name.opt) {
+              errors.push({param: 'general', msg: 'Дополнительное поле должно быть уникальным', giveopt: true, opt: identical[0].fullName+' (↓↓↓)'})
+              return res.send({errors: errors, status: 'failure'})
+            }
           }
-          res.send({errors: errors, body: req.body, status: 'success', id: student._id})
-        })
+        }
       }
+      var newstud = new Student({'name.firstName': req.body.firstname, 'name.lastName': req.body.lastname, 'name.patronymic': req.body.patronymic, 'group.name': req.body.group, 'name.opt': optvalue, documents: []})
+      newstud.save(function(err, student) {
+        if(err) {
+          errors.push({param: 'general', msg: 'DB Error'})
+          res.send({errors: errors, status: 'failure'})
+          return console.log(err);
+        }
+        res.send({errors: errors, body: req.body, status: 'success', id: student._id})
+      })
     })
   }
 
@@ -577,10 +590,12 @@ router.post('/editstudent/:id', middlewares.reqlogin, [
   check('lastname', 'Фамилия не может быть пустой').isLength({min: 1, max: 100}).trim(),
   check('patronymic', 'Отчество не может быть пустым').isLength({min: 1, max: 100}).trim(),
   check('group', 'Группа не может быть пустой').isLength({min: 1, max: 100}).trim(),
+  check('opt', 'Слишком длинная строка').isLength({min: 0, max: 50}).trim(),
   sanitize('firstname').trim().escape(),
   sanitize('lastname').trim().escape(),
   sanitize('patronymic').trim().escape(),
   sanitize('group').trim().escape(),
+  sanitize('opt').trim().escape(),
   function(req, res) {
 
     var errors = validationResult(req).array();
@@ -588,23 +603,47 @@ router.post('/editstudent/:id', middlewares.reqlogin, [
       res.send({errors: errors, status: 'failure'})
     }
     else {
-      var graduated = null; // по умолчанию студент не выпущен
-      if (req.body.graduated) {graduated = 1} // если была отмечена галочка, то выпущен
-      // объект с новыми именами
-      var newname = {firstName: req.body.firstname, lastName: req.body.lastname, patronymic: req.body.patronymic}
-      // ищем студента по айди и обновляем объект имени, группу, выпустился/невыпустился
-      Student.findOne({_id: req.params.id}, function(err, student) {
-        student.name = newname
-        student.group.name = req.body.group
-        student.graduationDay = graduated
-        student.save(function(err, stud) {
-          if (err){
-            errors.push({param: 'general', msg: 'DB Error'})
-            res.send({errors: errors, status: 'failure'})
-            return console.log(err);
+      var optvalue = null;
+      Student.find({_id: {$ne: req.params.id}, 'name.firstName': req.body.firstname, 'name.lastName': req.body.lastname, 'name.patronymic': req.body.patronymic, 'group.name': req.body.group}, function(err, identical) {
+        if(err) {
+          errors.push({param: 'general', msg: 'DB Error'})
+          res.send({errors: errors, status: 'failure'})
+          return console.log(err);
+        }
+        if (identical.length > 0) {
+          optvalue = req.body.opt;
+          if (req.body.opt == '') {
+            errors.push({param: 'general', msg: 'Такой студент уже есть в базе, добавлено дополнительное поле', giveopt: true, opt: identical[0].fullName+' (↓↓↓)'})
+            return res.send({errors: errors, status: 'failure'})
           }
-          res.send({body: req.body, degree: stud.degree, year: stud.year, errors: errors, status: 'success'})
-        })
+          else {
+            for (let istudent of identical) {
+              if (req.body.opt == istudent.name.opt) {
+                errors.push({param: 'general', msg: 'Дополнительное поле должно быть уникальным', giveopt: true, opt: identical[0].fullName+' (↓↓↓)'})
+                return res.send({errors: errors, status: 'failure'})
+              }
+            }
+          }
+        }
+          var graduated = null; // по умолчанию студент не выпущен
+          if (req.body.graduated) {graduated = 1} // если была отмечена галочка, то выпущен
+          // объект с новыми именами
+          var newname = {firstName: req.body.firstname, lastName: req.body.lastname, patronymic: req.body.patronymic}
+          // ищем студента по айди и обновляем объект имени, группу, выпустился/невыпустился
+          Student.findOne({_id: req.params.id}, function(err, student) {
+            student.name = newname
+            student.name.opt = optvalue;
+            student.group.name = req.body.group
+            student.graduationDay = graduated
+            student.save(function(err, stud) {
+              if (err){
+                errors.push({param: 'general', msg: 'DB Error'})
+                res.send({errors: errors, status: 'failure'})
+                return console.log(err);
+              }
+              res.send({body: req.body, opt: optvalue, degree: stud.degree, year: stud.year, errors: errors, status: 'success'})
+            })
+          })
       })
     }
 }])

@@ -1,3 +1,21 @@
+var firstNameStore = null
+var lastNameStore = null
+var patronymicStore = null
+var groupStore = null
+
+function optFieldController() {
+  if(firstNameStore) {
+    if (firstNameStore == $('#firstNameF').val() &&
+        lastNameStore == $('#lastNameF').val() &&
+        patronymicStore == $('#patronymicF').val() &&
+        groupStore == $('#groupF').val()) {
+          $('#optdiv').fadeIn()
+        }
+        else {
+          $('#optdiv').fadeOut()
+        }
+  }
+}
 $(document).ready(function(){
 
 
@@ -125,29 +143,47 @@ $(document).ready(function(){
         }
         $(this).parent().fadeOut(300, function() { $(this).remove(); }) // убираем текст с именем файла и крестиком
       })
+
       $('#student-name-edit-link').click(function() { // редактирование студента
         $(this).hide(); // скрываем карандаш
         $('.student-data').hide(); // скрываем данные студента
         $('.glass').show(); // показываем бокал
         // создаем целую новую форму
-        $("<form class='pure-form' id='student-form' method='POST' action=''><span class='error'></span><div class='student-form-field'>Фамилия: <input type='text' autocomplete='off' name='lastname' value='"+$(this).parent().data('lastname')+"'> <span class='error'></span></div>"+
-        "<div class='student-form-field'>Имя: <input type='text' autocomplete='off' name='firstname' value='"+$(this).parent().data('firstname')+"'> <span class='error'></span></div>"+
-        "<div class='student-form-field'>Отчество: <input type='text' autocomplete='off' name='patronymic' value='"+$(this).parent().data('patronymic')+"'> <span class='error'></span></div>"+
-        "<div class='student-form-field'>Группа: <input type='text' autocomplete='off' name='group' value='"+$(this).parent().data('group')+"'> <span class='error'></span></div>"+
+        $("<form class='pure-form' id='student-form' method='POST' action=''><span class='error'></span><div style='padding-top: 5px;' class='student-form-field'>Фамилия: <input id='lastNameF' onkeyup='optFieldController()' type='text' autocomplete='off' name='lastname' value='"+$(this).parent().data('lastname')+"'> <span class='error'></span></div>"+
+        "<div class='student-form-field'>Имя: <input id='firstNameF' onkeyup='optFieldController()' type='text' autocomplete='off' name='firstname' value='"+$(this).parent().data('firstname')+"'> <span class='error'></span></div>"+
+        "<div class='student-form-field'>Отчество: <input id='patronymicF' onkeyup='optFieldController()' type='text' autocomplete='off' name='patronymic' value='"+$(this).parent().data('patronymic')+"'> <span class='error'></span></div>"+
+        "<div class='student-form-field'>Группа: <input id='groupF' onkeyup='optFieldController()' type='text' autocomplete='off' name='group' value='"+$(this).parent().data('group')+"'> <span class='error'></span></div>"+
+        "<div id='optdiv' class='student-form-field'><span id='optlabel'></span> <input style='display: block;' id='opt' type='text' autocomplete='off' name='opt'> <span class='error'></span></div>"+
         "<div class='student-form-field'>Выпустился: <input type='checkbox' id='graduatedcheckbox' name='graduated' value='true' "+(($('.student-data-year').html() == 'Выпустился') ? 'checked' : '')+"></div>"+
         "<button class='pure-button pure-button-primary' id='submit-student-form' type='button'>Подтвердить</button><button class='pure-button' type='button' id='student-form-cancel'>Отмена</button></form>").appendTo($('.student-data-container'))
+        if($('h1').data('opt')) {
+          $('#optlabel').html($('.student-fullname').html() + ' (↓↓↓)')
+          $('#optdiv').show()
+          $('#opt').val($('h1').data('opt'))
+          firstNameStore = $('#firstNameF').val()
+          lastNameStore = $('#lastNameF').val()
+          patronymicStore = $('#patronymicF').val()
+          groupStore = $('#groupF').val()
+        }
       })
       $('body').on('click', '#student-form-cancel', function() { // клик по отмене
         $('#student-form').remove();
         $('.student-data').show();
         $('.glass').hide();
         $('#student-name-edit-link').show()
+        firstNameStore = null
+        lastNameStore = null
+        patronymicStore = null
+        groupStore = null
       })
       $('body').on('click', '#submit-student-form', function() { // клик по подтверждению редактирования студента
         var studentData = 0; // не знаю зачем это
         $('#student-form-cancel').prop('disabled', true); // отключаем кнопки
         $('#submit-student-form').prop('disabled', true);
         $('.submitspinner').show()
+        $('input').each(function(){
+          $(this).prop('readonly', true);
+        })
         $('#student-form').children('.error').html('') // очищаем ошибку, если была
         $.ajax({
           url: '/student/editstudent/'+$('h1').data('id'), // адрес запроса
@@ -158,10 +194,21 @@ $(document).ready(function(){
           $('#student-form-cancel').prop('disabled', false); // включаем кнопки
           $('#submit-student-form').prop('disabled', false);
           $('.submitspinner').hide()
+          $('input').each(function(){
+            $(this).prop('readonly', false);
+          })
           if (response.errors.length != 0) { // ошибки
             for (var i = 0; i < response['errors'].length; i++) {
               if (response['errors'][i]['param'] == 'general') {
                 $('#student-form').children('.error').html(response['errors'][i]['msg']).hide().fadeIn()
+                if (response['errors'][i]['giveopt']) {
+                  $('#optlabel').html(response['errors'][i]['opt'])
+                  $('#optdiv').fadeIn()
+                  firstNameStore = $('#firstNameF').val()
+                  lastNameStore = $('#lastNameF').val()
+                  patronymicStore = $('#patronymicF').val()
+                  groupStore = $('#groupF').val()
+                }
               }
               else{
                 var fieldname = response['errors'][i]['param']
@@ -175,9 +222,11 @@ $(document).ready(function(){
             $('h1').data('lastname', response.body.lastname)
             $('h1').data('patronymic', response.body.patronymic)
             $('h1').data('group', response.body.group)
+            $('h1').data('opt', response.opt)
             $('.student-data-group').html(response.body.group)
             $('.student-data-degree').html(response.degree)
             $('.student-data-year').html(response.year)
+            $('.student-opt').html(' ('+response.opt+')')
             $('#student-form-cancel').trigger('click')
           }
         })

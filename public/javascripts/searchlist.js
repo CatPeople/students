@@ -1,7 +1,6 @@
 $(document).ready(function(){
-  $('.searchlist-link').click(function() { // у этой ссылки есть атрибут data('group'), где содержится название группы
-    $('#groupinput').val($(this).data('group')) // мы присваиваем ее как значение скрытого поля #groupinput
-    $('form').submit() // и отправляем форму серверу с этим новым значением группы
-    // страница обновляется и сервер присылает плебейскую страницу студента
+  $('.searchlist-link').click(function() {
+    $('#studid').val($(this).data('id'))
+    $('form').submit() 
   })
 })
