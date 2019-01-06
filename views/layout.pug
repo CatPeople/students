@@ -13,18 +13,18 @@ if !pageturn
       ul#navigation
         if userid
           if login == 'admin'
-            li
+            li(class=activePage=='info' ? "nav-active" : "")
               a(href='/adminpanel') Информация
-            li
+            li(class=activePage=='students' ? "nav-active" : "")
               a(href='/student') Студенты
-            li
+            li(class=activePage=='types' ? "nav-active" : "")
               a(href='/types') Типы документов
-            li
+            li(class=activePage=='requests' ? "nav-active" : "")
               a(href='/auth/requests') Заявки на регистрацию
           else 
-            li
+            li(class=activePage=='search' ? "nav-active" : "")
               a(href='/search/') Поиск
-        li
+        li(class=activePage=='account' ? "nav-active" : "")
           a(href='/auth/') Аккаунт
       block content
 else 

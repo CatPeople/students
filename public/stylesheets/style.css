@@ -252,11 +252,11 @@ ul#navigation {
 ul#navigation li {
   float: left;
   border: 1px solid #ddd;
-  border-left: none;
+  border-right: none;
   background-color: #f9f9f9;
 }
-ul#navigation li:first-child {
-  border-left: 1px solid #ddd;
+ul#navigation li:last-child {
+  border-right: 1px solid #ddd;
 }
 
 
@@ -270,6 +270,14 @@ ul#navigation li a {
 
 ul#navigation li a:hover:not(.active) {
     background-color: #fdfdfd;
+}
+
+.nav-active > a:hover:not(.active){
+  background-color: #f6f6f6 !important;
+}
+
+.nav-active + li {
+  border-left: none !important;
 }
 
 .active {
@@ -451,6 +459,11 @@ color:orange;
 
 #optdiv {
   display: none;
+}
+
+.nav-active {
+  background-color: #efefef !important;
+  border: 1px solid #b1b1b1 !important;
 }
 
 @media only screen and (max-width: 480px) {

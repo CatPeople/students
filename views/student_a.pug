@@ -1,6 +1,7 @@
 extends layout
 
 block head
+  - var activePage = "students"
   script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
   script(src='/javascripts/studentadmin.js')
   script(src='/javascripts/jquery.ui.widget.js')
@@ -61,7 +62,7 @@ block content
             for scope in scopes
               option(value=scope.name)
                 | #{scope.name}
-          input#rating(type='number' min='0' name='rating' value='' required step="0.5" placeholder='Баллы')
+          input#rating(type='number' min='0.5' name='rating' value='' required step="0.5" placeholder='Баллы')
         div
           button.pure-button.pure-button-primary#form_submit(type='submit') Подтвердить
           i.submitspinner.fas.fa-spinner.fa-spin(style="font-size: 20px; margin-left: 5px; color: black; vertical-align: middle; display: none")

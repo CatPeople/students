@@ -153,7 +153,7 @@ router.get('/adminpanel/config', middlewares.reqlogin, function(req, res, next) 
     if (err) {console.log(err); process.exit(1);}
     configread = JSON.parse(data)
     var freshScopes = configread.scopes.slice(0);
-    res.render('config', {title: 'Дополнительная конфигурация', freshScopes: freshScopes.join(', ')})
+    res.render('config', {title: 'Дополнительная конфигурация', userid: req.session.userId, login: req.session.login, freshScopes: freshScopes.join(', ')})
   })
 })
 

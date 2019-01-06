@@ -127,7 +127,7 @@ $(document).ready(function(){
         $form.children('select').prop('selectedIndex',0); // устанавливаем выбранную опцию на нулевую
         $form.children('select').trigger('change') // триггерим обработчик смены опции, который создает поля
         $form.find('#select-scope').val(divBeingEdited.find('.scope-display-value').html())
-        $form.find('#rating').val(parseInt(divBeingEdited.find('.rating-display').html()))
+        $form.find('#rating').val(parseFloat(divBeingEdited.find('.rating-display').html()))
         $('.document-creation-field-input').each(function(index) {
           // заполняем оригинальные значения полей, для удобства
           $(this).val(divBeingEdited.find('.student-document-more').find('.document-field-value').eq(index).html())

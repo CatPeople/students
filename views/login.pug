@@ -1,6 +1,7 @@
 extends layout
 
 block head
+  - var activePage = "account"
   script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
   script(src='/javascripts/passwordcheck.js')
   if userid
@@ -12,7 +13,10 @@ block head
     script(src='/javascripts/login.js')
 
 block content
-  h1 Войти
+  if userid
+    h1 Аккаунт
+  else
+    h1 Войти
   if userid
     p
       b Вы вошли как #{login}

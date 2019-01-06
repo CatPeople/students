@@ -1,9 +1,10 @@
 extends layout
 
 block head
+  - var activePage = "search"
   script(src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js")
   script(src="/javascripts/searchlist.js")
-  script(defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js")
+  script(defer src="https://use.fontawesome.com/releases/v5.6.3/js/all.js" integrity="sha384-EIHISlAOj4zgYieurP0SdoiBYfGJKkgWedPHH4jCzpCXLmzVsw1ouK59MuUtP4a1" crossorigin="anonymous")
 block content
   h1 Поиск
   form(method='POST' action='')
@@ -14,7 +15,10 @@ block content
         li
           div.student-entry
             a.searchlist-link(href='javascript:void(0)' data-id=student._id) 
-              i.far.fa-user(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+              if student.graduationDay > new Date()
+                i.far.fa-user(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
+              else
+                i.fas.fa-user-graduate(style="font-size: 20px; color: #0069ca; margin-right: 5px;")
               | #{student.fullName} 
               if student.name.opt && student.name.opt != ''
                 | (#{student.name.opt})

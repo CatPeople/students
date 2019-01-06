@@ -196,8 +196,9 @@ function(req, res, next) {
   if (req.query.name) { // идет поиск только по имени группы, поэтому запрос простой
     if (req.query.ratingscopes) {
       var ratedstudents = [];
+      var today = new Date();
       async.each(req.query.ratingscopes, function(ratingscope, cb) {
-        Student.find({'group.name': req.query.name, ratings: {$ne: null}})
+        Student.find({'group.name': req.query.name, ratings: {$ne: null}, graduationDay: {$gt: today}})
         .populate({path: 'ratings', match: {scope: ratingscope, actualrating: {$ne: 0}}, populate: {path: 'scope'}})
         .exec(function(err, list_students) {
           if (err) { return console.log(err); }
@@ -230,8 +231,9 @@ else { // нет никаких поисков, клиент просто наж
       // страница была взята из запроса еще в самом начале этой всей длинной функции
   var ratedstudents = [];
   if (req.query.ratingscopes) {
+    var today = new Date();
     async.each(req.query.ratingscopes, function(ratingscope, cb) {
-      Student.find({ratings: {$ne: null}})
+      Student.find({ratings: {$ne: null}, graduationDay: {$gt: today}})
       .populate({path: 'ratings', match: {scope: ratingscope, actualrating: {$ne: 0}}, populate: {path: 'scope'}})
       .exec(function(err, list_students) {
         if (err) { return console.log(err); }
@@ -448,6 +450,11 @@ router.post('/:id', middlewares.reqlogin, [
     throw new Error('Несуществующее значение')
   }),
   check('rating').isNumeric(),
+  check('rating').custom(value=>{
+    if (value % 0.5 != 0) return false
+    if (value <= 0) return false
+    return true
+  }),
   check('fields.*', 'Поле не может быть пустым').isLength({min: 1, max: 100}).trim(),
   check('names.*').isLength({min: 1, max: 100}).trim(),
   check('typename').isLength({min: 1, max: 100}).trim(),
@@ -531,6 +538,11 @@ router.post('/editdocument/:id', middlewares.reqlogin, [
     throw new Error('Несуществующее значение')
   }),
   check('rating').isNumeric(),
+  check('rating').custom(value=>{
+    if (value % 0.5 != 0) return false
+    if (value <= 0) return false
+    return true
+  }),
   check('fields.*', 'Поле не может быть пустым').isLength({min: 1, max: 100}).trim(),
   check('names.*').isLength({min: 1, max: 100}).trim(),
   check('typename').isLength({min: 1, max: 100}).trim(),

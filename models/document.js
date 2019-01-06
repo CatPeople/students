@@ -34,7 +34,7 @@ DocumentSchema.virtual('names').get(function () {
 });
 
 DocumentSchema.virtual('ruPluralize').get(function () {
-  var number = this.rating;
+  var number = Math.floor(this.rating);
   number = number % 100;
   if (Math.floor(number / 10) == 1) {return 'ов'}
   number = number % 10;
