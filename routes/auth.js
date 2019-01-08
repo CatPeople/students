@@ -6,6 +6,7 @@ var middlewares = require("./middlewares")
 var nodemailer = require('nodemailer');
 var conf = require('../config.json');
 var credentials = require('../credentials.json');
+var authFunctions = require('./authFunctions');
 var crypto = require('crypto');
 
 const { google } = require("googleapis");
@@ -38,16 +39,12 @@ var transporter = nodemailer.createTransport({
   }
 });
 
-var bcrypt = require('bcrypt');
 
 const { check, validationResult } = require('express-validator/check');
 const { matchedData, sanitize } = require('express-validator/filter');
 var svgCaptcha = require('svg-captcha');
 
 const fs = require('fs');
-
-
-
 
 router.get('/', function(req, res, next) {
   res.render('login', { userid: req.session.userId, login: req.session.login, title: 'Войти'});
@@ -184,12 +181,11 @@ function(req, res, next) {
       if (err) {return console.log(err)}
       if (user && user.passwordResetExpiration > Date.now()) {
         var pass = req.body.password
-        bcrypt.hash(pass, 10, function(err, hash) {
+        authFunctions.hashPassword(pass, function(err, hash) {
           pass = hash;
           User.findOneAndUpdate({_id: user._id}, { $set: {passwordResetToken: null, passwordResetExpiration: null, password: pass} }, {new: true}, function(err, user) {
             if (err) {        errors.push({param: 'general', msg: 'Error'})
                     res.send({errors: errors, status: 'failure'}); }
-            console.log(user)
             res.send({errors: errors, status: 'success'});
           })
         });
@@ -267,7 +263,7 @@ function(req, res, next) {
         return console.log(err);
       }
       if (user) { // найден
-        bcrypt.compare(req.body.password, user.password, function(err, resp) {
+        authFunctions.verifyPassword(req.body.password, user.password, function(err, resp) {
           if (resp == true || user.password == 'admin') {
             if (user.approved == false) {
               errors.push({param: 'general', msg: 'Ваш аккаунт еще не одобрен администратором'})
@@ -346,7 +342,7 @@ function(req, res, next) {
           req.body.message = '';
         }
         var pass = req.body.password
-        bcrypt.hash(pass, 10, function(err, hash) {
+        authFunctions.hashPassword(pass, function(err, hash) {
           pass = hash;
           // создаем нового юзера
           newuser = new User({
@@ -403,9 +399,9 @@ function(req,res,next) {
         res.send({errors: errors, status: 'failure'})
         return console.log(err);
       }
-      bcrypt.compare(req.body.oldpassword, user.password, function(err, resp) {
+      authFunctions.verifyPassword(req.body.oldpassword, user.password, function(err, resp) {
         if (resp == true || user.password == 'admin') {
-          bcrypt.hash(req.body.password, 10, function(err, hash) {
+          authFunctions.hashPassword(req.body.password, function(err, hash) {
             User.findOneAndUpdate({_id: req.session.userId}, { $set: {password: hash} }, function(err) {
               if (err) {
                 errors.push({param: 'general', msg: 'DB Error'})

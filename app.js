@@ -10,7 +10,6 @@ var bodyParser = require('body-parser');
 
 var session = require('express-session')
 const MongoStore = require('connect-mongo')(session);
-var bcrypt = require('bcrypt');
 
 var randomstring = require("randomstring");
 var faker = require('faker');
