@@ -47,7 +47,7 @@ var svgCaptcha = require('svg-captcha');
 const fs = require('fs');
 
 router.get('/', function(req, res, next) {
-  res.render('login', { userid: req.session.userId, login: req.session.login, title: 'Войти'});
+  res.render('login', { userid: req.session.userId, login: req.session.login, title: req.session.userId?'Аккаунт':'Войти'});
 
 });
 
@@ -136,7 +136,7 @@ else {
 
 router.get('/registration', function(req, res, next) {
   if (req.session.userId) { // если уже залогинен
-    res.render('login', { userid: req.session.userId, login: req.session.login, title: 'Войти'});
+    res.render('login', { userid: req.session.userId, login: req.session.login, title: 'Аккаунт'});
   }
   else {
     var captcha = svgCaptcha.createMathExpr(); // создаем капчу
