@@ -16,7 +16,8 @@ var faker = require('faker');
 const fileUpload = require('express-fileupload');
 var async = require("async");
 
-var Student = require('./models/student')
+var studentexp = require('./models/student');
+var Student = studentexp.Student
 var User = require('./models/user')
 var documentmodels = require('./models/document')
 
@@ -106,7 +107,6 @@ app.use('/', index);
 app.use('/student', students);
 app.use('/types', types);
 app.use('/auth', auth);
-
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

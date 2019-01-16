@@ -353,6 +353,7 @@ table {
 .student-ratings {
   display: inline-block;
   margin-left: 15px;
+  white-space: nowrap;
 }
 
 

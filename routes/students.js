@@ -1,10 +1,11 @@
 var express = require('express');
 var router = express.Router();
 
-var Student = require('../models/student')
+var studentexp = require('../models/student');
+var Student = studentexp.Student
+var Rating = studentexp.Rating
 var Type = require('../models/type')
 var documentmodels = require('../models/document')
-var Rating = require('../models/rating')
 var File = require('../models/file')
 var ServerInfo = require('../models/serverinfo')
 var async = require("async");
@@ -40,20 +41,17 @@ function updateRating(student, scope, addnumber, callback) {
     }
   })
   if (!ratingobject) {
-    ratingobject = new Rating({scope: scope, actualrating: 0})
-    Student.findByIdAndUpdate(student._id, { $push: { ratings: ratingobject._id } })
+    ratingobject = new Rating({scope: scope, ratingsum: 0})
+    ratingobject.ratingsum = ratingobject.ratingsum + addnumber
+    Student.findByIdAndUpdate(student._id, { $push: { ratings: ratingobject } })
     .exec(function(err) {
       if (err) {return console.log(err)}
-      ratingobject.actualrating = ratingobject.actualrating + addnumber
-      Rating.findOneAndUpdate({_id: ratingobject._id}, ratingobject, {upsert: true}, function(err) {
-        if (err) {return console.log(err)}
-          callback()
-      })
+      callback()
     })
   }
   else {
-  ratingobject.actualrating = +ratingobject.actualrating + (+addnumber)
-  Rating.findOneAndUpdate({_id: ratingobject._id}, { $set: { actualrating: ratingobject.actualrating }}, {upsert: true, new: true}, function(err) {
+  ratingobject.ratingsum = +ratingobject.ratingsum + (+addnumber)
+  Student.findOneAndUpdate({_id: student._id}, { $set: { ratings: student.ratings }}, {upsert: true, new: true}, function(err) {
     if (err) {return console.log(err)}
       callback()
   })
@@ -62,20 +60,13 @@ function updateRating(student, scope, addnumber, callback) {
 
 function recalculateRatings(studentid, callback) {
   Student.findById(studentid)
-  .populate('ratings')
   .populate('documents')
   .exec(function(err, student) {
     if (err) {return console.log(err)}
-    async.each(student.ratings, function(rating, cb) {
-      Rating.findByIdAndUpdate(rating._id, { $set: { actualrating: 0 } }, function(err) {
-        if (err) {return console.log(err)}
-        cb()
-      })
-    }, function(err) {
+    Student.findOneAndUpdate({_id: student._id}, { $set: { ratings: [] }}, function(err) {
         if (err) {return console.log(err)}
         async.eachSeries(student.documents, function(doc, cb) {
           Student.findById(student._id)
-          .populate('ratings')
           .populate('documents')
           .exec(function(err, stud) {
               if (err) {return console.log(err)}
@@ -86,7 +77,7 @@ function recalculateRatings(studentid, callback) {
           if (err) {return console.log(err)}
           Student.findById(student._id)
           .populate({path: 'documents', populate: {path: 'scope'}}) // заполняем ссылки на документы объектами документов
-          .populate({path: 'ratings', populate: {path: 'scope'}})
+          .populate({path: 'ratings.scope'})
           .exec(function(err, newstudd) {
             if (err) {return console.log(err)}
             callback(newstudd)
@@ -96,6 +87,8 @@ function recalculateRatings(studentid, callback) {
 
   })
 }
+
+
 
 // список студентов
 router.get('/', middlewares.reqlogin, function(req, res, next) {
@@ -198,9 +191,10 @@ function(req, res, next) {
       var ratedstudents = [];
       var today = new Date();
       async.each(req.query.ratingscopes, function(ratingscope, cb) {
-        Student.find({'group.name': req.query.name, ratings: {$ne: null}, graduationDay: {$gt: today}})
-        .populate({path: 'ratings', match: {scope: ratingscope, actualrating: {$ne: 0}}, populate: {path: 'scope'}})
+        Student.find({'group.name': req.query.name, ratings: {$elemMatch: {scope: ratingscope}}, graduationDay: {$gt: today}},  {'ratings.$': 1, 'name': 1, 'group.name': 1, 'graduationDay': 1})
+        .populate({path: 'ratings.scope'})
         .exec(function(err, list_students) {
+          console.log(list_students)
           if (err) { return console.log(err); }
             var i = list_students.length;
             while (i--) {
@@ -213,7 +207,7 @@ function(req, res, next) {
         })
       }, function(err) {
         if (err) { return console.log(err); }
-        ratedstudents.sort(function(a,b) {return b.ratings[0].actualrating - a.ratings[0].actualrating})
+        ratedstudents.sort(function(a,b) {return b.ratings[0].ratingsum - a.ratings[0].ratingsum})
         res.render('student_list', {title: 'Студенты', student_list: ratedstudents, pagestotal: 1, pageturn: true, page: 1, ratingon: true});
       })
     }
@@ -233,8 +227,8 @@ else { // нет никаких поисков, клиент просто наж
   if (req.query.ratingscopes) {
     var today = new Date();
     async.each(req.query.ratingscopes, function(ratingscope, cb) {
-      Student.find({ratings: {$ne: null}, graduationDay: {$gt: today}})
-      .populate({path: 'ratings', match: {scope: ratingscope, actualrating: {$ne: 0}}, populate: {path: 'scope'}})
+      Student.find({ratings: {$elemMatch: {scope: ratingscope}}, graduationDay: {$gt: today}},  {'ratings.$': 1, 'name': 1, 'group.name': 1, 'graduationDay': 1})
+      .populate({path: 'ratings.scope'})
       .exec(function(err, list_students) {
         if (err) { return console.log(err); }
           var i = list_students.length;
@@ -248,7 +242,7 @@ else { // нет никаких поисков, клиент просто наж
       })
     }, function(err) {
       if (err) { return console.log(err); }
-      ratedstudents.sort(function(a,b) {return b.ratings[0].actualrating - a.ratings[0].actualrating})
+      ratedstudents.sort(function(a,b) {return b.ratings[0].ratingsum - a.ratings[0].ratingsum})
       res.render('student_list', {title: 'Студенты', student_list: ratedstudents, pagestotal: 1, pageturn: true, page: 1, ratingon: true});
     })
   }
@@ -372,7 +366,7 @@ router.get('/:id', middlewares.reqlogin, function(req, res, next) {
   async.parallel([function(callback){
   Student.findById(req.params.id) // поиск студента по id
   .populate({path: 'documents', populate: {path: 'scope'}}) // заполняем ссылки на документы объектами документов
-  .populate({path: 'ratings', populate: {path: 'scope'}})
+  .populate({path: 'ratings.scope'})
   .populate({path: 'documents', populate: {path: 'files'}})
   .exec(function(err, student_data) { // получили студента
     if (err) {next(err); return console.log (err);}
@@ -404,7 +398,7 @@ function(callback) { // третья параллельная функция и�
 router.get('/printable/:id.pdf', middlewares.reqcommonlogin, function(req, res, next) {
   Student.findById(req.params.id) //ищем студента
   .populate({path: 'documents', populate: {path: 'scope'}})
-  .populate({path: 'ratings', populate: {path: 'scope'}})
+  .populate({path: 'ratings.scope'})
   .exec(function(err, student_data) {
     if (err) {next(err); return console.log (err);}
     // генерируем хтмл из специального шаблона

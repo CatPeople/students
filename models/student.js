@@ -1,8 +1,13 @@
 const mongoose   = require('mongoose')
 var mongoosePaginate = require('mongoose-paginate');
 
-var StudentSchema = new mongoose.Schema({
 
+var RatingSchema = new mongoose.Schema({
+  scope: { type: mongoose.Schema.Types.ObjectId, ref: 'Scope' },
+  ratingsum: Number
+})
+
+var StudentSchema = new mongoose.Schema({
   name: {
     firstName: String,
     lastName: String,
@@ -15,7 +20,7 @@ var StudentSchema = new mongoose.Schema({
     year: Number
   },
   documents: [{type: mongoose.Schema.Types.ObjectId, ref: 'Document'}],
-  ratings: [{type: mongoose.Schema.Types.ObjectId, ref: 'Rating'}],
+  ratings: [RatingSchema],
   graduationDay: Date
 })
 StudentSchema.plugin(mongoosePaginate);
@@ -102,10 +107,13 @@ StudentSchema.pre('save', function(next) {
             this.graduationDay = new Date(0);
         }
     }
-    else {
+    else if (this.graduationDay == '1') {
       this.graduationDay = new Date(0);
     }
   next();
 });
 
-module.exports = mongoose.model('Student', StudentSchema)
+module.exports = {
+  Student: mongoose.model('Student', StudentSchema),
+  Rating: mongoose.model('Rating', RatingSchema)
+}

@@ -54,11 +54,11 @@ block content
               td.student-list-group-cell
                 span.student-list-group
                   |  !{student.group.name}
-              if student.ratings
+              if student.ratings && ratingon
                 if student.ratings[0]
-                  if student.ratings[0].actualrating
+                  if student.ratings[0].ratingsum
                     td
-                      | #{student.ratings[0].actualrating} (#{student.ratings[0].scope.name})
+                      | #{student.ratings[0].ratingsum} (#{student.ratings[0].scope.name})
   if !pageturn
     div(class="pure-button-group" role="group" aria-label="..." data-pages=pagestotal data-page=page)
         button#page-first(class="pure-button pure-button-disabled") Первая

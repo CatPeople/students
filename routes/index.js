@@ -1,7 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var Type = require('../models/type')
-var Student = require('../models/student')
+var studentexp = require('../models/student');
+var Student = studentexp.Student
 var User = require('../models/user')
 var ServerInfo = require('../models/serverinfo')
 var documentmodels = require('../models/document')
@@ -70,7 +71,7 @@ function(req, res, next) {
     Student.find({$and:[{'name.firstName': firstName}, {'name.lastName': lastName}, {'name.patronymic': patronymic}]})
     .populate({path: 'documents', populate: {path: 'scope'}}) // заполняем ссылки на документы объектами документов
     .populate({path: 'documents', populate: {path: 'files'}})
-    .populate({path: 'ratings', populate: {path: 'scope'}})
+    .populate({path: 'ratings.scope'})
     .exec(function(err, students) {
       if (err) {
         res.render('search', {userid: req.session.userId, login: req.session.login, title: 'Поиск'});
@@ -91,7 +92,7 @@ function(req, res, next) {
     Student.find({_id: req.body.studid})
     .populate({path: 'documents', populate: {path: 'scope'}}) // заполняем ссылки на документы объектами документов
     .populate({path: 'documents', populate: {path: 'files'}})
-    .populate({path: 'ratings', populate: {path: 'scope'}})
+    .populate({path: 'ratings.scope'})
     .exec(function(err, students) {
       if (err) {
         res.render('search', {userid: req.session.userId, login: req.session.login, title: 'Поиск'});
